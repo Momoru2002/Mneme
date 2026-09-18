@@ -9,11 +9,6 @@ tamper-evident audit log — all on your machine, no server, no network by defau
 [![CI](https://github.com/Momoru2002/Mneme/actions/workflows/ci.yml/badge.svg)](https://github.com/Momoru2002/Mneme/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/Momoru2002/Mneme?include_prereleases&sort=semver)](https://github.com/Momoru2002/Mneme/releases)
 
-> _Screenshot coming soon._ <!-- TODO: docs/assets/screenshot.png -->
-
-> Mneme is a fork of [Mimir](https://github.com/ecowangsa/mimir) by
-> **ecowangsa**, renamed and maintained here under the same
-> [MIT license](LICENSE). See [Attribution](#attribution) below.
 
 ## What is Mneme?
 
