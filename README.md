@@ -167,4 +167,4 @@ UI goes to the upstream project; this fork carries forward its own changes
 
 ## License
 
-[MIT](LICENSE) © 2026 ecowangsa
+[MIT](LICENSE) © 2026 momoru2002
