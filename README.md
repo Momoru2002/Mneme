@@ -9,15 +9,15 @@ tamper-evident audit log — all on your machine, no server, no network by defau
 [![CI](https://github.com/Momoru2002/Mneme/actions/workflows/ci.yml/badge.svg)](https://github.com/Momoru2002/Mneme/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/Momoru2002/Mneme?include_prereleases&sort=semver)](https://github.com/Momoru2002/Mneme/releases)
 
-
 ## What is Mneme?
 
 Mneme (named after the Greek Titan of memory — root of the word "mnemonic")
 is a desktop app that turns any folder of Markdown files — what it calls a
-**Well** — into a fast, searchable, access-controlled knowledge base. You point
-it at a directory of `.md` files and keep writing in plain Markdown; Mneme adds
-search, templates, user roles, and an audit trail on top, without ever moving
-your files off your computer.
+**Well** — into a fast, searchable, access-controlled knowledge base, blending
+Obsidian's plain-file philosophy with a Mimir-style single-source-of-truth vault.
+You point it at a directory of `.md` files and keep writing in plain Markdown;
+Mneme adds search, templates, user roles, and an audit trail on top, without
+ever moving your files off your computer.
 
 Everything runs inside a single application: a native window rendering a React
 interface, backed by a compiled Rust core that owns your data. There is no
@@ -152,14 +152,6 @@ are cut.
 
 - [Momoru2002](https://github.com/Momoru2002) — maintainer
 
-## Attribution
-
-Mneme started as a rename/fork of [**Mimir**](https://github.com/ecowangsa/mimir)
-by [ecowangsa](https://github.com/ecowangsa), reused here under the terms of its
-[MIT license](LICENSE). All credit for the original architecture, Rust core, and
-UI goes to the upstream project; this fork carries forward its own changes
-(currently: opt-in LAN access for web mode) under the Mneme name.
-
 ## License
 
-[MIT](LICENSE) © 2026 momoru2002
+[MIT](LICENSE) © 2026 ecowangsa
