@@ -1,0 +1,13 @@
+# Pin the Rust toolchain so `tauri dev` / `tauri build` (which spawn `cargo` in a
+# clean env) resolve a concrete toolchain even when the machine has no rustup
+# default set. Without this, a contributor whose rustup has a toolchain
+# installed but unselected gets a misleading "edition2024 required" error
+# (the default channel fell back to an older cargo).
+#
+# Channel only (no `targets`/`components`): rustup re-checks those on every
+# cargo invocation and reaches out to the network to install any that are
+# missing, which hangs/fails offline. The default profile already ships
+# clippy + rustfmt + the host target, so pinning the channel alone is enough
+# and stays offline-safe once 1.92.0 is installed.
+[toolchain]
+channel = "1.92.0"

@@ -1,0 +1,151 @@
+.mneme-preview {
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--color-mneme-text);
+  padding: 24px 28px;
+  max-width: 880px;
+  margin: 0 auto;
+}
+
+.mneme-preview h1,
+.mneme-preview h2,
+.mneme-preview h3,
+.mneme-preview h4,
+.mneme-preview h5,
+.mneme-preview h6 {
+  color: var(--color-mneme-cyan);
+  font-weight: 700;
+  line-height: 1.25;
+  margin: 1.6em 0 0.6em;
+}
+.mneme-preview h1 {
+  font-size: 1.8em;
+  border-bottom: 1px solid var(--color-mneme-border);
+  padding-bottom: 0.3em;
+}
+.mneme-preview h2 {
+  font-size: 1.4em;
+}
+.mneme-preview h3 {
+  font-size: 1.2em;
+}
+.mneme-preview h4 {
+  font-size: 1.05em;
+}
+
+.mneme-preview p {
+  margin: 0.8em 0;
+}
+.mneme-preview a {
+  color: var(--color-mneme-info);
+  text-decoration: underline;
+}
+.mneme-preview a:hover {
+  color: var(--color-mneme-gold);
+}
+.mneme-preview a[href^="#wikilink-"] {
+  color: var(--color-mneme-cyan);
+}
+.mneme-preview a[href^="#wikilink-"]:hover {
+  color: var(--color-mneme-gold);
+}
+
+.mneme-preview strong {
+  color: var(--color-mneme-gold);
+}
+.mneme-preview em {
+  color: var(--color-mneme-gold);
+  font-style: italic;
+}
+.mneme-preview del {
+  color: var(--color-mneme-text-dim);
+}
+
+.mneme-preview ul,
+.mneme-preview ol {
+  padding-left: 1.6em;
+  margin: 0.6em 0;
+}
+.mneme-preview li {
+  margin: 0.2em 0;
+}
+
+.mneme-preview blockquote {
+  border-left: 3px solid var(--color-mneme-gold);
+  padding: 0.2em 1em;
+  margin: 1em 0;
+  color: var(--color-mneme-text-muted);
+  background: rgba(212, 162, 78, 0.06);
+  border-radius: 0 var(--radius-mneme-md) var(--radius-mneme-md) 0;
+}
+
+.mneme-preview code {
+  font-family: "JetBrains Mono Variable", ui-monospace, SFMono-Regular, Menlo, monospace;
+  background: var(--color-mneme-surface-2);
+  color: var(--color-mneme-gold);
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+  font-size: 0.9em;
+}
+.mneme-preview pre {
+  background: var(--color-mneme-bg-2);
+  border: 1px solid var(--color-mneme-border);
+  border-radius: var(--radius-mneme-md);
+  padding: 1em;
+  overflow-x: auto;
+  margin: 1em 0;
+}
+.mneme-preview pre code {
+  background: transparent;
+  color: var(--color-mneme-text);
+  padding: 0;
+  font-size: 0.85em;
+}
+
+.mneme-preview table {
+  border-collapse: collapse;
+  margin: 1em 0;
+  width: 100%;
+  font-size: 0.95em;
+}
+.mneme-preview th,
+.mneme-preview td {
+  border: 1px solid var(--color-mneme-border);
+  padding: 0.5em 0.8em;
+  text-align: left;
+}
+.mneme-preview th {
+  background: var(--color-mneme-surface-2);
+  color: var(--color-mneme-text);
+  font-weight: 600;
+}
+
+.mneme-preview hr {
+  border: none;
+  border-top: 1px solid var(--color-mneme-border);
+  margin: 2em 0;
+}
+
+.mneme-preview img {
+  max-width: 100%;
+  border-radius: var(--radius-mneme-md);
+}
+
+.mermaid-rendered {
+  margin: 1em 0;
+  display: flex;
+  justify-content: center;
+}
+.mermaid-rendered svg {
+  max-width: 100%;
+}
+
+.mermaid-error {
+  background: var(--color-mneme-surface-2);
+  color: var(--color-mneme-danger);
+  padding: 1em;
+  border-radius: var(--radius-mneme-md);
+  font-family: "JetBrains Mono Variable", monospace;
+  font-size: 0.85em;
+}

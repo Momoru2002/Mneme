@@ -1,0 +1,53 @@
+[package]
+name = "mneme"
+version = "0.0.0"
+description = "Mneme — local-first knowledge vault desktop app"
+authors = ["Mneme contributors"]
+license = ""
+repository = ""
+edition = "2021"
+rust-version = "1.77.2"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+name = "mneme_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2.5.3", features = [] }
+
+[dependencies]
+serde_json = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+log = "0.4"
+tauri = { version = "2.9.5", features = [] }
+tauri-plugin-log = "2"
+tauri-plugin-window-state = "2"
+rusqlite = { version = "0.31", features = ["bundled"] }
+refinery = { version = "0.8", features = ["rusqlite"] }
+sha2 = "0.10"
+hex = "0.4"
+thiserror = "2"
+regex = "1"
+url = "2"
+libc = "0.2"
+# Unicode NFC normalization for the mirror untrusted-tree collision check (M6):
+# two tree entries whose names collide once NFC-folded would silently overwrite
+# each other on a normalizing/ case-insensitive filesystem at checkout.
+unicode-normalization = "0.1"
+argon2 = "0.5"
+# Enables `OsRng` for SaltString::generate (argon2's defaults don't pull the
+# getrandom feature); feature-unification turns it on for argon2's re-export.
+password-hash = { version = "0.5", features = ["getrandom"] }
+# v4 for entity IDs; v7 (time-ordered) for the per-launch log/diagnostic UUID
+# (logging keeper). tempfile is a RUNTIME dep, not just dev: the menu keeper
+# stages the diagnostic bundle via tempfile::Builder outside test code.
+uuid = { version = "1", features = ["v4", "v7"] }
+tempfile = "3"
+tiny_http = "0.12"
+rust-embed = "8"
+getrandom = "0.2"
+
+[dev-dependencies]
+tempfile = "3"

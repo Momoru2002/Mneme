@@ -1,0 +1,57 @@
+# superpowers
+.superpowers/
+# AI / engineering-process working artifacts — never ship to the public repo
+docs/superpowers/
+
+# dependencies
+node_modules
+.pnpm-store
+
+# build output
+dist
+build
+.tsbuildinfo
+*.tsbuildinfo
+
+# env
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# editor
+.vscode/*
+!.vscode/extensions.json
+.idea
+*.swp
+.DS_Store
+
+# test
+coverage
+.vitest
+
+# vite
+.vite
+
+# NOTE: apps/web/src/routeTree.gen.ts is intentionally committed — tsc (build +
+# typecheck) runs before the Vite plugin can generate it, so CI needs it present.
+apps/web/src/.tanstack-tmp/
+apps/web/.tanstack/
+
+# playwright
+tests/e2e/playwright-report
+tests/e2e/test-results
+tests/e2e/.cache
+test-results
+playwright-report
+# Playwright MCP scratch snapshots (tool output, not source)
+.playwright-mcp/
+
+# Claude Code local harness/tooling config (not part of the project)
+.claude/

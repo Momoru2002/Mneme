@@ -1,0 +1,87 @@
+@import "tailwindcss";
+@import "./wellspring.css";
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  /* Declare an explicit color-scheme so the (WK)WebView treats this as a
+     self-themed dark app. Without it, macOS Dark Mode makes WKWebView
+     auto-adjust inherited text colors — which rendered CodeMirror's
+     .cm-content glyphs invisible (dark-on-dark) while the gutter (explicit
+     color) still showed. */
+  color-scheme: dark;
+}
+
+/* Light themes need color-scheme:light on html AND body/#root (which carry their
+   own explicit `dark` above, so they don't inherit the per-theme value set on
+   <html> by theme-init). Enumerated per light theme; extend when a light theme
+   is added. */
+[data-theme="wellspring-light"],
+[data-theme="wellspring-light"] body,
+[data-theme="wellspring-light"] #root,
+[data-theme="sepia"],
+[data-theme="sepia"] body,
+[data-theme="sepia"] #root,
+[data-theme="solarized-light"],
+[data-theme="solarized-light"] body,
+[data-theme="solarized-light"] #root {
+  color-scheme: light;
+}
+
+body {
+  background: var(--color-mneme-bg);
+  color: var(--color-mneme-text);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* Subtle, themed scrollbars. Without this the WKWebView paints a chunky default
+   bar — most visibly on CodeMirror's .cm-scroller at the editor edge. Radix
+   ScrollArea (sidebar tree) hides the native bar and renders its own, so this
+   only restyles the genuine native scrollbars (editor, plain overflow). */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-mneme-surface-2) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-mneme-border);
+  border-radius: 8px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-mneme-surface-2);
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Radix ScrollArea wraps its content in an inner div with `min-width:100%;
+   display:table`. `display:table` shrink-wraps to max-content, so any child with
+   `white-space:nowrap` (e.g. a `truncate`d file name) widens the table past the
+   viewport and gets clipped instead of ellipsised. Force that wrapper to `block`
+   so children are constrained to the viewport width and `truncate` produces `…`.
+   We use no horizontal scrollbars anywhere, so disabling horizontal growth is safe. */
+[data-radix-scroll-area-viewport] > div {
+  display: block !important;
+}

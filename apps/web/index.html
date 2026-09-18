@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0B1929" />
+    <title>Mneme</title>
+    <!-- Externalized (was inline) so the production CSP needs no script 'unsafe-inline'. -->
+    <script src="/theme-init.js"></script>
+    <!--
+      Paint the dark app background immediately so there's no white WKWebView
+      flash before globals.css loads. Inline <style> is CSP-legal (style-src
+      'unsafe-inline'); theme-init.js sets data-theme first, so this can match.
+      Hardcoded hex (globals.css's --color-mneme-bg) since vars aren't loaded yet.
+    -->
+    <style>
+      html,
+      body {
+        margin: 0;
+        background: #0b1929;
+        /* Opt the WKWebView into the app's own dark scheme so macOS Dark Mode
+           doesn't auto-adjust inherited text colors (which rendered the editor
+           content invisible). Set here too — earliest, before globals.css. */
+        color-scheme: dark;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

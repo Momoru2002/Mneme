@@ -1,0 +1,41 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Mneme app icon">
+  <!--
+    Mneme app-icon source (regenerable). Run from apps/desktop/src-tauri:
+      cargo tauri icon icons/mneme-source.svg
+
+    Design: the FULL brand mark from apps/web/src/components/brand/Logo.tsx — the
+    "well rings" (Mímisbrunnr, the well of wisdom) with the GOLD DROP falling into
+    them — on a dark squircle tile (#0B1929 family). Must stay faithful to
+    Logo.tsx (rings + gold drop), not a rings-only mark.
+
+    Sizing/centering (fixes "icon too small + mark sits low"):
+      • Tile fills 864/1024 (84%) so it has the same Dock presence as neighbours
+        (the earlier 816/80% looked recessed). Squircle radius ≈ 0.2237 × 864.
+      • Logo.tsx places the rings low (cy=56/96) for the wordmark beneath it; a
+        standalone icon must OPTICALLY CENTER the mark instead. Geometric bbox
+        centre is (48,53); but the thin drop on top vs. the dense rings below make
+        the visual weight sit lower, so we nudge the mark UP ~24px from geometric
+        centre. Scale ×8.4, translate (109, 43) → symmetric horizontal padding
+        and a slightly top-biased placement that reads as optically centred.
+  -->
+  <defs>
+    <linearGradient id="tile" x1="160" y1="120" x2="864" y2="904" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0E2236"/>
+      <stop offset="1" stop-color="#081420"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Rounded-rect tile, 864 wide (84% of 1024), squircle radius ≈ 0.2237 × 864. -->
+  <rect x="80" y="80" width="864" height="864" rx="193" ry="193" fill="url(#tile)"/>
+
+  <!-- Brand mark (Logo.tsx) scaled ×8.4, optically centred (nudged up). -->
+  <g transform="translate(109 43) scale(8.4)">
+    <circle cx="48" cy="56" r="36" fill="none" stroke="#4FD1C5" stroke-width="1.5" opacity="0.45"/>
+    <circle cx="48" cy="56" r="28" fill="none" stroke="#4FD1C5" stroke-width="1.75" opacity="0.7"/>
+    <circle cx="48" cy="56" r="20" fill="none" stroke="#4FD1C5" stroke-width="2.25"/>
+    <circle cx="48" cy="56" r="12" fill="#4FD1C5" opacity="0.25"/>
+    <!-- Gold drop falling into the well (identical path to Logo.tsx 'mark'). -->
+    <path d="M 48 14 C 48 14, 38 30, 38 38 C 38 44, 42 48, 48 48 C 54 48, 58 44, 58 38 C 58 30, 48 14, 48 14 Z" fill="#D4A24E"/>
+    <circle cx="48" cy="40" r="2.5" fill="#0B1929" opacity="0.4"/>
+  </g>
+</svg>
