@@ -8,6 +8,7 @@ import {
   useOpenInBrowser,
   useWebModeStatus,
 } from '../../../lib/web-mode.ts';
+import { QrCode } from '../../QrCode.tsx';
 import { Button } from '../../ui/button.tsx';
 import { Field } from '../controls.tsx';
 
@@ -82,19 +83,29 @@ export function WebAccessSection(): React.JSX.Element {
 
       {running && lanUrl && (
         <Field label="Network link">
-          <div className="flex items-center gap-2">
-            <p className="flex-1 truncate text-sm text-muted-foreground">
-              From your phone or another device on this Wi-Fi:{' '}
-              <span className="font-mono">{lanUrl.replace(/^https?:\/\//, '')}</span>
-            </p>
-            <Button size="sm" variant="outline" onClick={copyLanUrl} title="Copy link">
-              Copy link
-            </Button>
+          <div className="flex items-start gap-4">
+            <div className="flex flex-1 flex-col gap-2">
+              <div className="flex items-center gap-2">
+                <p className="flex-1 truncate text-sm text-muted-foreground">
+                  From your phone or another device on this Wi-Fi:{' '}
+                  <span className="font-mono">{lanUrl.replace(/^https?:\/\//, '')}</span>
+                </p>
+                <Button size="sm" variant="outline" onClick={copyLanUrl} title="Copy link">
+                  Copy link
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Open this address on the other device's browser, then enter the token shown by
+                "Open in browser" on this desktop app. The QR code encodes this same link — it
+                saves typing the address, not the token.
+              </p>
+            </div>
+            <QrCode
+              value={lanUrl}
+              size={104}
+              className="shrink-0 rounded-md border border-border bg-white p-1.5"
+            />
           </div>
-          <p className="text-xs text-muted-foreground">
-            Open this address on the other device's browser, then enter the token shown by "Open
-            in browser" on this desktop app.
-          </p>
         </Field>
       )}
 
