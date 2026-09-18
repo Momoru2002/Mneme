@@ -466,6 +466,7 @@ fn content_type_for(path: &str) -> &'static str {
         "svg" => "image/svg+xml",
         "png" => "image/png",
         "json" | "map" => "application/json",
+        "webmanifest" => "application/manifest+json",
         "woff2" => "font/woff2",
         "ico" => "image/x-icon",
         _ => "application/octet-stream",
@@ -798,6 +799,20 @@ pub(crate) mod tests {
             assert_eq!(ctype, "text/javascript");
             assert!(!body.is_empty());
         }
+    }
+
+    #[test]
+    fn serves_manifest_with_manifest_json_content_type() {
+        let manifest_file = WebAssets::iter().find(|f| f.ends_with(".webmanifest"));
+        if let Some(name) = manifest_file {
+            let path = format!("/{name}");
+            let (status, ctype, _body) = serve_static(&path);
+            assert_eq!(status, 200);
+            assert_eq!(ctype, "application/manifest+json");
+        }
+        // If the bundle doesn't have one yet (stale build), this test is a no-op
+        // rather than a hard failure — the JS-asset test above already enforces
+        // that a fresh bundle exists.
     }
 
     #[test]
