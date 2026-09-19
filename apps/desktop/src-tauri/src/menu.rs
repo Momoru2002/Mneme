@@ -24,20 +24,30 @@ use crate::errors::Error;
 use crate::{logging, perms};
 
 /// Open a path or URL with the OS's default handler — `open` on macOS,
-/// `xdg-open` on Linux. (Not used for `open_privacy_settings`, which invokes a
-/// macOS-only System Settings URL scheme and has no Linux equivalent.)
+/// `cmd /C start` on Windows (invoking the shell's `start` builtin directly
+/// isn't possible; `start` isn't its own executable), `xdg-open` elsewhere
+/// (Linux). (Not used for `open_privacy_settings`, which invokes a
+/// macOS-only System Settings URL scheme and has no equivalent elsewhere.)
 pub(crate) fn open_with_os_default(target: impl AsRef<std::ffi::OsStr>) -> Result<(), Error> {
-    let cmd = if cfg!(target_os = "macos") {
-        "open"
+    let status = if cfg!(target_os = "macos") {
+        Command::new("open").arg(target).status()
+    } else if cfg!(target_os = "windows") {
+        // The leading "" is a deliberate no-op window-title argument: `start`
+        // treats the first quoted argument as a title, so a target path that
+        // itself contains spaces/quotes would otherwise be misparsed as one.
+        Command::new("cmd")
+            .args(["/C", "start", ""])
+            .arg(target)
+            .status()
     } else {
-        "xdg-open"
+        Command::new("xdg-open").arg(target).status()
     };
-    Command::new(cmd).arg(target).status().map_err(Error::Io)?;
+    status.map_err(Error::Io)?;
     Ok(())
 }
 
-/// Reveal the logs directory in the OS file manager (Finder on macOS, whatever
-/// `xdg-open` resolves to on Linux — typically the default file manager).
+/// Reveal the logs directory in the OS file manager (Finder on macOS,
+/// Explorer on Windows, whatever `xdg-open` resolves to on Linux).
 pub fn reveal_logs(_: AppHandle) -> Result<(), Error> {
     let logs = logging::dirs_logs_dir().join("com.mneme.desktop");
     open_with_os_default(logs)
