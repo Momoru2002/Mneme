@@ -95,9 +95,9 @@ export function WebAccessSection(): React.JSX.Element {
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground">
-                Open this address on the other device's browser, then enter the token shown by
-                "Open in browser" on this desktop app. The QR code encodes this same link — it
-                saves typing the address, not the token.
+                Open this address on the other device's browser, then enter the token shown by "Open
+                in browser" on this desktop app. The QR code encodes this same link — it saves
+                typing the address, not the token.
               </p>
             </div>
             <QrCode

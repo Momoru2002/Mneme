@@ -200,8 +200,7 @@ export const api = {
   webMode: {
     status: (): Promise<WebModeInfo> => call<WebModeInfo>('web_mode_status'),
     /** `lan: true` also allows other devices on this network (e.g. your phone) to connect. */
-    enable: (lan = false): Promise<WebModeInfo> =>
-      call<WebModeInfo>('web_mode_enable', { lan }),
+    enable: (lan = false): Promise<WebModeInfo> => call<WebModeInfo>('web_mode_enable', { lan }),
     disable: (): Promise<void> => call<void>('web_mode_disable'),
     openBrowser: (): Promise<void> => call<void>('web_mode_open_browser'),
   },

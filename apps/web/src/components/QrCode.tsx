@@ -36,13 +36,7 @@ export function QrCode({ value, size = 160, className }: QrCodeProps): React.JSX
 
   if (error) return null;
   if (!dataUrl) {
-    return (
-      <div
-        className={className}
-        style={{ width: size, height: size }}
-        aria-hidden="true"
-      />
-    );
+    return <div className={className} style={{ width: size, height: size }} aria-hidden="true" />;
   }
 
   return (
