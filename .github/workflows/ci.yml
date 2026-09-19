@@ -85,35 +85,9 @@ jobs:
           workspaces: './apps/desktop/src-tauri -> target'
 
       - name: Test
-        shell: bash
-        run: |
-          set +e
-          cargo test 2>&1 | tee /tmp/test-output.txt
-          code=${PIPESTATUS[0]}
-          set -e
-          if [ "$code" -ne 0 ]; then
-            encoded=""
-            while IFS= read -r line; do
-              encoded="${encoded}${line}%0A"
-            done < <(tail -c 3800 /tmp/test-output.txt)
-            echo "::error::${encoded}"
-            exit "$code"
-          fi
+        run: cargo test
         working-directory: apps/desktop/src-tauri
 
       - name: Clippy
-        shell: bash
+        run: cargo clippy --all-targets --all-features -- -D warnings
         working-directory: apps/desktop/src-tauri
-        run: |
-          set +e
-          cargo clippy --all-targets --all-features -- -D warnings 2>&1 | tee /tmp/clippy-output.txt
-          code=${PIPESTATUS[0]}
-          set -e
-          if [ "$code" -ne 0 ]; then
-            encoded=""
-            while IFS= read -r line; do
-              encoded="${encoded}${line}%0A"
-            done < <(tail -c 3800 /tmp/clippy-output.txt)
-            echo "::error::${encoded}"
-            exit "$code"
-          fi
