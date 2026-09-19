@@ -109,7 +109,7 @@ pub fn build_diagnostic_bundle(
     // refuses to write a destination that lives inside the tree it's
     // compressing (macOS/Linux `zip` tolerates this; PowerShell does not),
     // and avoiding it is simply more correct on every platform regardless.
-    let bundle_tmp = diag_dir.join(format!(".mneme-diag-{launch_uuid}.zip.tmp"));
+    let bundle_tmp = diag_dir.join(format!(".mneme-diag-{launch_uuid}.zip"));
     zip_directory(stage.path(), &bundle_tmp)?;
 
     perms::set_file_0600(&bundle_tmp)?;
