@@ -102,5 +102,18 @@ jobs:
         working-directory: apps/desktop/src-tauri
 
       - name: Clippy
-        run: cargo clippy --all-targets --all-features -- -D warnings
+        shell: bash
         working-directory: apps/desktop/src-tauri
+        run: |
+          set +e
+          cargo clippy --all-targets --all-features -- -D warnings 2>&1 | tee /tmp/clippy-output.txt
+          code=${PIPESTATUS[0]}
+          set -e
+          if [ "$code" -ne 0 ]; then
+            encoded=""
+            while IFS= read -r line; do
+              encoded="${encoded}${line}%0A"
+            done < <(tail -c 3800 /tmp/clippy-output.txt)
+            echo "::error::${encoded}"
+            exit "$code"
+          fi
