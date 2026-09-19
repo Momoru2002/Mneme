@@ -4,6 +4,7 @@
 //! HTTP handlers, ensuring command logic and security guards are not
 //! duplicated across transports.
 
+pub mod db;
 pub mod files;
 pub mod folders;
 pub mod search;

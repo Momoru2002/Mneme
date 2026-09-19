@@ -38,6 +38,10 @@ connection unless you explicitly turn one on.
 - **Web access (opt-in)** — start a local companion server to open your Well in a
   browser tab, with an option to allow other devices on the same network (e.g.
   your phone) to connect too, gated by a session token.
+- **MCP server for AI assistants** — connect Claude Desktop, Claude Code, or any
+  other [MCP](https://modelcontextprotocol.io)-capable assistant directly to a
+  Well over stdio: it can search, read, and write your notes as a second brain.
+  See [Connecting an AI assistant](#connecting-an-ai-assistant-mcp) below.
 - **Cross-platform** — native builds for macOS, Linux, and Windows (Windows
   support is new — see the note below).
 
@@ -122,6 +126,55 @@ holds the search index, accounts, and settings.
   cloud storage, which would corrupt the database.
 - Every file operation is confined to the active Well's folder — path traversal
   (`..`), absolute-path escapes, and symlink tricks are all rejected.
+
+## Connecting an AI assistant (MCP)
+
+Mneme ships a small companion binary, `mneme-mcp`, that speaks the
+[Model Context Protocol](https://modelcontextprotocol.io) over stdio — the
+same standard Claude Desktop, Claude Code, and a growing set of other AI
+tools use to connect to local data. It's a third transport onto the exact
+same core the desktop app and Web Access use (see the diagram above), not a
+separate copy of your notes: it reads and writes the same
+`~/.mneme/mneme.db` and the same Well folders on disk, live.
+
+**Tools it exposes:** `list_wells`, `search_notes`, `read_note`, `list_notes`,
+`create_note`, `update_note`, `list_templates`. Ask your assistant to list its
+available tools once connected to confirm.
+
+### Setup
+
+1. Build it alongside the desktop app:
+   ```sh
+   cd apps/desktop/src-tauri
+   cargo build --release --bin mneme-mcp
+   ```
+   The binary lands at `target/release/mneme-mcp` (`.exe` on Windows).
+2. Point your MCP client at that path. For **Claude Desktop**, edit its config
+   file (Settings → Developer → Edit Config, or find it directly at
+   `~/Library/Application Support/Claude/claude_desktop_config.json` on macOS,
+   `%APPDATA%\Claude\claude_desktop_config.json` on Windows) and add:
+   ```json
+   {
+     "mcpServers": {
+       "mneme": {
+         "command": "/absolute/path/to/mneme-mcp"
+       }
+     }
+   }
+   ```
+   Restart Claude Desktop; a working connection shows an 🔨 tools icon with
+   Mneme's tools listed.
+3. Run Mneme's desktop app as usual — `mneme-mcp` reads/writes the same
+   database, so notes the assistant creates show up there immediately, and
+   vice versa. The desktop app does not need to be running for `mneme-mcp`
+   itself to work (SQLite doesn't need a "server" to be up), but you'll want
+   it open to actually see what the assistant is doing.
+
+Since this connects over **stdio only** (no network port), it only works for
+an AI client running on the same machine — this is a deliberate scope
+decision, not a current limitation to be lifted later; see [Web
+access](#features) above if you specifically want a different device to
+reach a Well.
 
 ## Build from source
 

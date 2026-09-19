@@ -53,6 +53,13 @@ tempfile = "3"
 tiny_http = "0.12"
 rust-embed = "8"
 getrandom = "0.2"
+# MCP server binary (src/bin/mneme-mcp.rs) — lets AI assistants (Claude
+# Desktop, Claude Code, and anything else that speaks MCP) read and write
+# notes in a Well over stdio. `rmcp` is the official Rust MCP SDK.
+rmcp = { version = "3", features = ["server", "transport-io"] }
+tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
+schemars = "1"
+anyhow = "1"
 
 # libc's Unix-specific bits (getuid, ENOTEMPTY, utimes) are only used on Unix —
 # see perms.rs, logging.rs, snapshots.rs. Scoping it here keeps a Windows build
