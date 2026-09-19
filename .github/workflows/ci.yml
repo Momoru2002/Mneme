@@ -85,40 +85,9 @@ jobs:
           workspaces: './apps/desktop/src-tauri -> target'
 
       - name: Test
-        shell: bash
-        run: |
-          set +e
-          cargo test 2>&1 | tee /tmp/test-output.txt
-          code=${PIPESTATUS[0]}
-          set -e
-          if [ "$code" -ne 0 ]; then
-            # Surface the failure as a check-run annotation (visible via the
-            # REST API even when raw job logs aren't reachable) — grab the
-            # tail, since annotation bodies are size-limited, and %0A-encode
-            # newlines per the workflow-command format. Pure bash (no awk —
-            # not guaranteed present in Git Bash on windows-latest).
-            encoded=""
-            while IFS= read -r line; do
-              encoded="${encoded}${line}%0A"
-            done < <(tail -c 3000 /tmp/test-output.txt)
-            echo "::error::${encoded}"
-            exit "$code"
-          fi
+        run: cargo test
         working-directory: apps/desktop/src-tauri
 
       - name: Clippy
-        shell: bash
+        run: cargo clippy --all-targets --all-features -- -D warnings
         working-directory: apps/desktop/src-tauri
-        run: |
-          set +e
-          cargo clippy --all-targets --all-features -- -D warnings 2>&1 | tee /tmp/clippy-output.txt
-          code=${PIPESTATUS[0]}
-          set -e
-          if [ "$code" -ne 0 ]; then
-            encoded=""
-            while IFS= read -r line; do
-              encoded="${encoded}${line}%0A"
-            done < <(tail -c 3000 /tmp/clippy-output.txt)
-            echo "::error::${encoded}"
-            exit "$code"
-          fi
