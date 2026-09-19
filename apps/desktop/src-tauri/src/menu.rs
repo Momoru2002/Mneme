@@ -104,16 +104,19 @@ pub fn build_diagnostic_bundle(
     // Build the zip: the system `zip` binary on macOS/Linux (a runtime
     // default on both; avoids pulling in a Rust zip crate), PowerShell's
     // `Compress-Archive` on Windows (bundled since Windows 10 — no `zip.exe`
-    // ships with Windows). Run from inside the stage dir so the archive paths
-    // are stable + relative.
-    let bundle_in_stage = stage.path().join("bundle.zip");
-    zip_directory(stage.path(), &bundle_in_stage)?;
+    // ships with Windows). The in-progress archive is written to `diag_dir`
+    // (a SIBLING of `stage`), not inside `stage` itself: `Compress-Archive`
+    // refuses to write a destination that lives inside the tree it's
+    // compressing (macOS/Linux `zip` tolerates this; PowerShell does not),
+    // and avoiding it is simply more correct on every platform regardless.
+    let bundle_tmp = diag_dir.join(format!(".mneme-diag-{launch_uuid}.zip.tmp"));
+    zip_directory(stage.path(), &bundle_tmp)?;
 
-    perms::set_file_0600(&bundle_in_stage)?;
+    perms::set_file_0600(&bundle_tmp)?;
     let final_path = diag_dir.join(format!("mneme-diagnostic-{launch_uuid}.zip"));
     // Idempotent across repeated invocations for the same launch uuid.
     let _ = fs::remove_file(&final_path);
-    fs::rename(&bundle_in_stage, &final_path).map_err(Error::Io)?;
+    fs::rename(&bundle_tmp, &final_path).map_err(Error::Io)?;
     // Belt-and-suspenders re-chmod after rename.
     perms::set_file_0600(&final_path)?;
 
