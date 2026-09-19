@@ -15,7 +15,6 @@
 
 use std::fs::{self, File};
 use std::io::{BufRead, BufReader, Write};
-use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
@@ -24,11 +23,24 @@ use tauri::AppHandle;
 use crate::errors::Error;
 use crate::{logging, perms};
 
-/// Reveal the logs directory in Finder (`open ~/Library/Logs/com.mneme.desktop`).
+/// Open a path or URL with the OS's default handler — `open` on macOS,
+/// `xdg-open` on Linux. (Not used for `open_privacy_settings`, which invokes a
+/// macOS-only System Settings URL scheme and has no Linux equivalent.)
+pub(crate) fn open_with_os_default(target: impl AsRef<std::ffi::OsStr>) -> Result<(), Error> {
+    let cmd = if cfg!(target_os = "macos") {
+        "open"
+    } else {
+        "xdg-open"
+    };
+    Command::new(cmd).arg(target).status().map_err(Error::Io)?;
+    Ok(())
+}
+
+/// Reveal the logs directory in the OS file manager (Finder on macOS, whatever
+/// `xdg-open` resolves to on Linux — typically the default file manager).
 pub fn reveal_logs(_: AppHandle) -> Result<(), Error> {
     let logs = logging::dirs_logs_dir().join("com.mneme.desktop");
-    Command::new("open").arg(logs).status().map_err(Error::Io)?;
-    Ok(())
+    open_with_os_default(logs)
 }
 
 /// Open macOS System Settings → Privacy & Security → Files and Folders.
@@ -74,7 +86,7 @@ pub fn build_diagnostic_bundle(
         .prefix(".mneme-diag-stage-")
         .tempdir_in(diag_dir)
         .map_err(Error::Io)?;
-    fs::set_permissions(stage.path(), fs::Permissions::from_mode(0o700)).map_err(Error::Io)?;
+    perms::ensure_dir_0700(stage.path())?;
 
     for src in sources {
         if !src.exists() {
@@ -89,32 +101,60 @@ pub fn build_diagnostic_bundle(
         )?;
     }
 
-    // Build the zip via the system `zip` binary (a macOS runtime default;
-    // avoids pulling in a Rust zip crate). Run from inside the stage dir so the
-    // archive paths are stable + relative.
+    // Build the zip: the system `zip` binary on macOS/Linux (a runtime
+    // default on both; avoids pulling in a Rust zip crate), PowerShell's
+    // `Compress-Archive` on Windows (bundled since Windows 10 — no `zip.exe`
+    // ships with Windows). Run from inside the stage dir so the archive paths
+    // are stable + relative.
     let bundle_in_stage = stage.path().join("bundle.zip");
-    let status = Command::new("zip")
-        .arg("-r")
-        .arg(&bundle_in_stage)
-        .arg(".")
-        .current_dir(stage.path())
-        .status()
-        .map_err(Error::Io)?;
-    if !status.success() {
-        return Err(Error::Io(std::io::Error::other(format!(
-            "zip exited with status {status}"
-        ))));
-    }
+    zip_directory(stage.path(), &bundle_in_stage)?;
 
-    fs::set_permissions(&bundle_in_stage, fs::Permissions::from_mode(0o600)).map_err(Error::Io)?;
+    perms::set_file_0600(&bundle_in_stage)?;
     let final_path = diag_dir.join(format!("mneme-diagnostic-{launch_uuid}.zip"));
     // Idempotent across repeated invocations for the same launch uuid.
     let _ = fs::remove_file(&final_path);
     fs::rename(&bundle_in_stage, &final_path).map_err(Error::Io)?;
     // Belt-and-suspenders re-chmod after rename.
-    fs::set_permissions(&final_path, fs::Permissions::from_mode(0o600)).map_err(Error::Io)?;
+    perms::set_file_0600(&final_path)?;
 
     Ok(final_path)
+}
+
+/// Zip everything under `src_dir` into `zip_path`. See [`build_diagnostic_bundle`]
+/// for why this shells out rather than using a Rust zip crate, and why the
+/// command differs by OS.
+fn zip_directory(src_dir: &Path, zip_path: &Path) -> Result<(), Error> {
+    let status = if cfg!(target_os = "windows") {
+        // Compress-Archive refuses to overwrite without -Force, and wants a
+        // glob for "everything in this folder". Single-quote the paths and
+        // double any embedded single quote (PowerShell's escape for a
+        // single-quoted string) since these paths come from the user's own
+        // profile directory name.
+        let ps_escape = |p: &Path| p.display().to_string().replace('\'', "''");
+        let cmd = format!(
+            "Compress-Archive -Path '{}\\*' -DestinationPath '{}' -Force",
+            ps_escape(src_dir),
+            ps_escape(zip_path)
+        );
+        Command::new("powershell")
+            .args(["-NoProfile", "-NonInteractive", "-Command", &cmd])
+            .status()
+            .map_err(Error::Io)?
+    } else {
+        Command::new("zip")
+            .arg("-r")
+            .arg(zip_path)
+            .arg(".")
+            .current_dir(src_dir)
+            .status()
+            .map_err(Error::Io)?
+    };
+    if !status.success() {
+        return Err(Error::Io(std::io::Error::other(format!(
+            "archiving the diagnostic bundle exited with status {status}"
+        ))));
+    }
+    Ok(())
 }
 
 fn copy_dir_scrubbed(src: &Path, dst: &Path) -> Result<(), Error> {
@@ -129,7 +169,7 @@ fn copy_dir_scrubbed(src: &Path, dst: &Path) -> Result<(), Error> {
     }
     if ft.is_dir() {
         fs::create_dir_all(dst).map_err(Error::Io)?;
-        fs::set_permissions(dst, fs::Permissions::from_mode(0o700)).map_err(Error::Io)?;
+        perms::ensure_dir_0700(dst)?;
         for entry in fs::read_dir(src).map_err(Error::Io)? {
             let entry = entry.map_err(Error::Io)?;
             copy_dir_scrubbed(&entry.path(), &dst.join(entry.file_name()))?;
@@ -140,7 +180,7 @@ fn copy_dir_scrubbed(src: &Path, dst: &Path) -> Result<(), Error> {
         let inp = File::open(src).map_err(Error::Io)?;
         let reader = BufReader::new(inp);
         let mut out = File::create(dst).map_err(Error::Io)?;
-        fs::set_permissions(dst, fs::Permissions::from_mode(0o600)).map_err(Error::Io)?;
+        perms::set_file_0600(dst)?;
         for line in reader.lines() {
             match line {
                 Ok(l) => {
@@ -190,8 +230,7 @@ mod tests {
     fn build_bundle_writes_to_target_dir_and_is_0600() {
         let tmp = tempdir().unwrap();
         let diag_dir = tmp.path().join("diagnostics");
-        fs::create_dir_all(&diag_dir).unwrap();
-        fs::set_permissions(&diag_dir, fs::Permissions::from_mode(0o700)).unwrap();
+        perms::ensure_dir_0700(&diag_dir).unwrap();
 
         let logs = tmp.path().join("logs");
         fs::create_dir_all(&logs).unwrap();
@@ -199,13 +238,61 @@ mod tests {
 
         let path = build_diagnostic_bundle(&diag_dir, "0190abcd-launch", &[&logs]).unwrap();
 
-        let mode = fs::metadata(&path).unwrap().permissions().mode() & 0o777;
-        assert_eq!(mode, 0o600, "bundle file must be 0o600, got {mode:o}");
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            let mode = fs::metadata(&path).unwrap().permissions().mode() & 0o777;
+            assert_eq!(mode, 0o600, "bundle file must be 0o600, got {mode:o}");
+        }
         assert!(path.starts_with(&diag_dir));
         let name = path.file_name().unwrap().to_string_lossy().into_owned();
         assert!(name.starts_with("mneme-diagnostic-"));
         assert!(name.ends_with(".zip"));
         assert!(name.contains("0190abcd-launch"));
+    }
+
+    /// Read every member of a zip archive's content as one concatenated string
+    /// — `unzip -p` on macOS/Linux, `Expand-Archive` + read-back on Windows
+    /// (which has no bundled `unzip.exe`).
+    fn unzip_all_text(bundle: &Path) -> String {
+        if cfg!(target_os = "windows") {
+            let out_dir = tempdir().unwrap();
+            let status = Command::new("powershell")
+                .args([
+                    "-NoProfile",
+                    "-NonInteractive",
+                    "-Command",
+                    &format!(
+                        "Expand-Archive -Path '{}' -DestinationPath '{}' -Force",
+                        bundle.display().to_string().replace('\'', "''"),
+                        out_dir.path().display().to_string().replace('\'', "''"),
+                    ),
+                ])
+                .status()
+                .expect("powershell available on windows");
+            assert!(status.success(), "Expand-Archive failed");
+            let mut combined = String::new();
+            fn walk(dir: &Path, out: &mut String) {
+                for entry in fs::read_dir(dir).unwrap().flatten() {
+                    let p = entry.path();
+                    if p.is_dir() {
+                        walk(&p, out);
+                    } else if let Ok(s) = fs::read_to_string(&p) {
+                        out.push_str(&s);
+                    }
+                }
+            }
+            walk(out_dir.path(), &mut combined);
+            combined
+        } else {
+            let unzipped = Command::new("unzip")
+                .arg("-p")
+                .arg(bundle)
+                .output()
+                .expect("unzip available on macos/linux");
+            assert!(unzipped.status.success(), "unzip -p failed");
+            String::from_utf8_lossy(&unzipped.stdout).into_owned()
+        }
     }
 
     #[test]
@@ -226,16 +313,7 @@ mod tests {
         );
 
         let bundle = build_diagnostic_bundle(&diag_dir, "uuid1", &[&logs]).unwrap();
-
-        // `unzip -p` writes all member content to stdout (the zip may deflate,
-        // so we can't grep the raw archive bytes).
-        let unzipped = Command::new("unzip")
-            .arg("-p")
-            .arg(&bundle)
-            .output()
-            .expect("unzip available on macos");
-        assert!(unzipped.status.success(), "unzip -p failed");
-        let body = String::from_utf8_lossy(&unzipped.stdout).into_owned();
+        let body = unzip_all_text(&bundle);
 
         assert!(
             !body.contains("ABCsupersecrettoken123"),
@@ -280,8 +358,13 @@ mod tests {
         let tmp = tempdir().unwrap();
         let diag_dir = tmp.path().join("diagnostics");
         perms::ensure_dir_0700(&diag_dir).unwrap();
-        let mode = fs::metadata(&diag_dir).unwrap().permissions().mode() & 0o777;
-        assert_eq!(mode, 0o700);
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            let mode = fs::metadata(&diag_dir).unwrap().permissions().mode() & 0o777;
+            assert_eq!(mode, 0o700);
+        }
+        assert!(diag_dir.exists());
         perms::ensure_dir_0700(&diag_dir).unwrap();
     }
 }

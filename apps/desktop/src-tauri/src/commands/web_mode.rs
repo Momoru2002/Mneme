@@ -87,9 +87,9 @@ pub async fn web_mode_status(web: State<'_, WebMode>) -> Result<WebModeInfo, Str
 /// Open the companion URL in the OS browser WITH the token in the fragment,
 /// built entirely Rust-side so the token never enters the web/JS layer (W7).
 ///
-/// Uses `Command::new("open")` — the same macOS mechanism the rest of the app
-/// uses (see `menu::reveal_logs` and `menu::open_privacy_settings`). This
-/// avoids pulling in `tauri-plugin-opener` as an extra dependency.
+/// Cross-platform: `open` on macOS, `xdg-open` on Linux (see
+/// `menu::open_with_os_default`) — avoids pulling in `tauri-plugin-opener` as
+/// an extra dependency.
 #[tauri::command]
 pub async fn web_mode_open_browser(web: State<'_, WebMode>) -> Result<(), String> {
     let url = {
@@ -100,9 +100,5 @@ pub async fn web_mode_open_browser(web: State<'_, WebMode>) -> Result<(), String
         let s = guard.as_ref().ok_or("web mode is not running")?;
         format!("http://127.0.0.1:{}/#token={}", s.port, s.token)
     };
-    std::process::Command::new("open")
-        .arg(&url)
-        .status()
-        .map_err(|e| format!("could not open the browser: {e}"))?;
-    Ok(())
+    crate::menu::open_with_os_default(&url).map_err(|e| format!("could not open the browser: {e}"))
 }

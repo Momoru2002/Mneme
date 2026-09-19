@@ -1,12 +1,14 @@
-//! Filesystem-surface hygiene for `~/.mneme` (macOS).
+//! Filesystem-surface hygiene for `~/.mneme`.
 //!
 //! Hand-derived from the slice-6 `sync_surface` keeper, UNCHANGED in substance:
 //! the pivot did not touch these invariants. We refuse to run inside iCloud /
 //! cloud-storage (which corrupts SQLite WAL), drop a `.noindex` marker so
 //! Spotlight leaves the DB alone, and ask Time Machine to exclude the dir.
 //!
-//! macOS / unix only (`tmutil` is macOS-specific; a `cfg(windows)` equivalent
-//! is a slice-8 cross-platform concern).
+//! The iCloud check and the `.noindex` marker are harmless no-ops outside
+//! macOS (the paths/marker they check for simply never apply). Time Machine
+//! exclusion (`tmutil`) is macOS-only functionality and is explicitly skipped
+//! on other platforms — see [`exclude_from_time_machine`].
 
 use std::fs;
 use std::path::Path;
@@ -39,6 +41,12 @@ fn write_noindex_marker(p: &Path) -> Result<(), Error> {
 }
 
 fn exclude_from_time_machine(p: &Path) -> Result<(), Error> {
+    // Time Machine is macOS-only; skip entirely elsewhere rather than spawn a
+    // `tmutil` process that's guaranteed to fail (harmlessly, but it would log
+    // a confusing warning on every launch on Linux/Windows for nothing).
+    if !cfg!(target_os = "macos") {
+        return Ok(());
+    }
     // CRITICAL: `tmutil addexclusion` can take ~10s+ to return, and run_all()
     // executes synchronously inside Tauri's setup() on the MAIN THREAD before the
     // event loop services the window — so a slow addexclusion beachballs the whole

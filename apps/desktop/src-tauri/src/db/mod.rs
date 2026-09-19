@@ -328,6 +328,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(unix)]
     fn open_app_db_enforces_0700_dir_and_0600_file() {
         // SEC-3: the end-to-end on-disk security boundary — the ~/.mneme dir at
         // 0700 and the DB file at 0600, plus a working migrated connection.
@@ -349,6 +350,22 @@ mod tests {
             0o600,
             "the db file must be 0600"
         );
+        assert!(table_names(&conn).contains(&"users".to_string()));
+    }
+
+    #[test]
+    #[cfg(windows)]
+    fn open_app_db_creates_dir_and_working_db() {
+        // Windows has no mode-bit equivalent to assert (see perms.rs module
+        // doc) — this confirms the dir/file get created and the DB is usable,
+        // which is what this platform can actually guarantee.
+        let tmp = tempfile::tempdir().unwrap();
+        let mneme_dir = tmp.path().join(".mneme");
+
+        let conn = open_app_db(&mneme_dir).expect("open hardened app db");
+
+        assert!(mneme_dir.exists());
+        assert!(mneme_dir.join("mneme.db").exists());
         assert!(table_names(&conn).contains(&"users".to_string()));
     }
 }

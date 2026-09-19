@@ -5,7 +5,7 @@ disk, with full-text search, templates, multi-user access control, and a
 tamper-evident audit log — all on your machine, no server, no network by default.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-![Platforms](https://img.shields.io/badge/platform-macOS%20%7C%20Linux-lightgrey)
+![Platforms](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows%20(beta)-lightgrey)
 [![CI](https://github.com/Momoru2002/Mneme/actions/workflows/ci.yml/badge.svg)](https://github.com/Momoru2002/Mneme/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/Momoru2002/Mneme?include_prereleases&sort=semver)](https://github.com/Momoru2002/Mneme/releases)
 
@@ -38,8 +38,8 @@ connection unless you explicitly turn one on.
 - **Web access (opt-in)** — start a local companion server to open your Well in a
   browser tab, with an option to allow other devices on the same network (e.g.
   your phone) to connect too, gated by a session token.
-- **Cross-platform** — native builds for macOS and Linux (Windows support is in
-  progress).
+- **Cross-platform** — native builds for macOS, Linux, and Windows (Windows
+  support is new — see the note below).
 
 ## Download
 
@@ -50,7 +50,19 @@ Grab the latest build for your OS from the
 | ------- | --------------------------- |
 | macOS   | `.dmg` (universal)          |
 | Linux   | `.AppImage` or `.deb`       |
-| Windows | _coming soon_               |
+| Windows | `.msi` or `.exe` (NSIS)     |
+
+> **Windows status:** the Windows build was only just added and hasn't yet had
+> a release cut with real installer testing on Windows hardware — CI (see the
+> badge above) compiles and runs the test suite on `windows-latest` on every
+> commit, so a red badge means something is actually broken, but "CI is green"
+> and "someone has clicked through the installer on a real Windows machine"
+> aren't the same claim yet. If you hit a Windows-specific issue, please open
+> one. One known, deliberate difference from macOS/Linux: file/directory
+> permissions can't be locked down to 0600/0700-equivalent on Windows the way
+> they are on Unix (there's no direct analog); Mneme instead relies on your
+> Windows user profile's own default access restrictions. See the doc comment
+> in `apps/desktop/src-tauri/src/perms.rs` for the full rationale.
 
 ### Install notes (unsigned builds)
 
@@ -62,6 +74,8 @@ Releases are not yet code-signed, so your OS may warn on first launch:
   xattr -dr com.apple.quarantine /Applications/Mneme.app
   ```
 - **Linux** — make the AppImage executable: `chmod +x Mneme_*.AppImage`.
+- **Windows** — SmartScreen will likely warn on first launch since the binary
+  is unsigned: click **More info** → **Run anyway**.
 
 ## Getting started
 
@@ -97,13 +111,15 @@ holds the search index, accounts, and settings.
 
 ### Built with security in mind
 
-- The UI never opens a socket or a port — it talks to the core through in-process
-  calls, so there is no local web server to attack.
+- The UI talks to the core through in-process calls — no local server is
+  running unless you explicitly turn on Web Access (see Features above), which
+  binds to loopback only unless you opt into LAN mode.
 - Passwords are hashed with **argon2id**; sessions live only in memory and end when
   you close the app.
-- `~/.mneme` is created private (`0700`) and the database file is forced to `0600`.
-  Mneme refuses to run if that folder lives inside cloud storage, which would
-  corrupt the database.
+- `~/.mneme` is created private (`0700` dir / `0600` DB file on macOS and Linux;
+  Windows relies on your user profile's own access restrictions instead — see
+  the Windows note above). Mneme refuses to run if that folder lives inside
+  cloud storage, which would corrupt the database.
 - Every file operation is confined to the active Well's folder — path traversal
   (`..`), absolute-path escapes, and symlink tricks are all rejected.
 

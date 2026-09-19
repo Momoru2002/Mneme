@@ -344,8 +344,9 @@ pub fn browse_host(path: &str) -> Result<HostBrowseResponse, WellsError> {
 
 /// Folder picker's starting point: the user's home directory.
 pub fn host_home() -> Result<HostBrowseResponse, WellsError> {
-    let home = std::env::var("HOME").map_err(|_| WellsError::Invalid("HOME not set".into()))?;
-    browse_host(&home)
+    let home = dirs::home_dir()
+        .ok_or_else(|| WellsError::Invalid("could not determine the user's home directory".into()))?;
+    browse_host(&home.to_string_lossy())
 }
 
 #[cfg(test)]

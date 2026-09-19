@@ -6,7 +6,7 @@ authors = ["Mneme contributors"]
 license = ""
 repository = ""
 edition = "2021"
-rust-version = "1.77.2"
+rust-version = "1.83"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -31,7 +31,12 @@ hex = "0.4"
 thiserror = "2"
 regex = "1"
 url = "2"
-libc = "0.2"
+# Cross-platform equivalents used by the Windows port of the perms/logging/
+# snapshots keepers (see perms.rs doc comment): `dirs` for the home directory
+# instead of hand-parsing $HOME/%USERPROFILE%, `filetime` for setting a file's
+# mtime instead of unix-only libc::utimes.
+dirs = "5"
+filetime = "0.2"
 # Unicode NFC normalization for the mirror untrusted-tree collision check (M6):
 # two tree entries whose names collide once NFC-folded would silently overwrite
 # each other on a normalizing/ case-insensitive filesystem at checkout.
@@ -48,6 +53,12 @@ tempfile = "3"
 tiny_http = "0.12"
 rust-embed = "8"
 getrandom = "0.2"
+
+# libc's Unix-specific bits (getuid, ENOTEMPTY, utimes) are only used on Unix —
+# see perms.rs, logging.rs, snapshots.rs. Scoping it here keeps a Windows build
+# from pulling it in at all.
+[target.'cfg(unix)'.dependencies]
+libc = "0.2"
 
 [dev-dependencies]
 tempfile = "3"

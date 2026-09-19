@@ -36,8 +36,8 @@ export function WebAccessSection(): React.JSX.Element {
   return (
     <div className="flex flex-col gap-4">
       <p className="text-sm text-muted-foreground">
-        Use Mneme in a browser tab against this running desktop app. Localhost only — keep this
-        desktop app open while using the browser view.
+        Use Mneme in a browser tab against this running desktop app. Keep this desktop app open
+        while using the browser view — closing it stops the server for everyone connected.
       </p>
 
       <Field label="Status">

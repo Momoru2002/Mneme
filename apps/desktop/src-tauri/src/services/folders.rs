@@ -130,10 +130,11 @@ pub fn folder_remove(
         std::fs::remove_dir_all(&abs)?;
     } else {
         std::fs::remove_dir(&abs).map_err(|e| {
-            // ENOTEMPTY (raw OS error 66 on macOS / 39 on Linux) — use the raw
-            // code rather than `ErrorKind::DirectoryNotEmpty` (stable ≥ 1.83,
-            // above this crate's MSRV of 1.77.2).
-            if e.raw_os_error() == Some(libc::ENOTEMPTY) {
+            // `ErrorKind::DirectoryNotEmpty` (stable since Rust 1.83) instead of
+            // matching a Unix-only raw OS error code — this crate's pinned
+            // toolchain (rust-toolchain.toml) is 1.92, well above that, and this
+            // is the only form that also works correctly on Windows.
+            if e.kind() == std::io::ErrorKind::DirectoryNotEmpty {
                 FoldersError::NotEmpty
             } else {
                 FoldersError::Io(e)

@@ -10,9 +10,13 @@
 //!
 //! macOS / unix only (`~/Library/Logs`, `/bin/date`); slice-8 cross-platform.
 
+//! macOS / Linux / Windows. Log directory and today's date are resolved
+//! per-OS below (see [`dirs_logs_dir`] and [`today_yyyymmdd`]) rather than
+//! hardcoding `~/Library/Logs` and shelling out to `/bin/date`, neither of
+//! which exists on Windows.
+
 use std::fs::{create_dir_all, File, OpenOptions};
 use std::io::{BufWriter, Write};
-use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
 use std::sync::{Mutex, OnceLock};
 
@@ -39,7 +43,13 @@ pub fn open_core_log(home: &Path) -> Result<LogContext, Error> {
     let date = today_yyyymmdd();
     let path = logs_dir.join(format!("core-{date}.log"));
     let file = OpenOptions::new().create(true).append(true).open(&path)?;
-    std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o600))?;
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o600))?;
+    }
+    // Windows: no mode-bit equivalent to set here; see perms.rs module doc for
+    // why this app relies on NTFS profile-directory inheritance on Windows.
     let launch_uuid = Uuid::now_v7().to_string();
     let mut w = BufWriter::new(file);
     let _ = writeln!(
@@ -53,17 +63,54 @@ pub fn open_core_log(home: &Path) -> Result<LogContext, Error> {
     })
 }
 
+/// Base directory logs live under, before the `com.mneme.desktop` subfolder.
+/// macOS keeps the platform-conventional `~/Library/Logs`; other platforms
+/// (Linux, Windows) use the OS's "local data" root (`~/.local/share` /
+/// `%LOCALAPPDATA%`) with a `Logs` subfolder — a reasonable, portable default
+/// rather than each OS's most idiomatic-possible location.
 pub fn dirs_logs_dir() -> PathBuf {
-    let home = std::env::var("HOME").expect("HOME not set");
-    PathBuf::from(home).join("Library").join("Logs")
+    #[cfg(target_os = "macos")]
+    {
+        dirs::home_dir()
+            .expect("could not determine the user's home directory")
+            .join("Library")
+            .join("Logs")
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        dirs::data_local_dir()
+            .expect("could not determine the user's local data directory")
+            .join("Logs")
+    }
 }
 
+/// Today's date as `YYYYMMDD`, UTC. Computed with plain integer arithmetic
+/// (Howard Hinnant's `civil_from_days` algorithm) instead of shelling out to
+/// `/bin/date`, which doesn't exist on Windows — this only needs a stable
+/// rotation key for the log filename, not a timezone-correct local date.
 fn today_yyyymmdd() -> String {
-    let out = std::process::Command::new("/bin/date")
-        .arg("+%Y%m%d")
-        .output();
-    out.map(|o| String::from_utf8_lossy(&o.stdout).trim().to_string())
-        .unwrap_or_else(|_| "00000000".into())
+    let secs = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_secs())
+        .unwrap_or(0);
+    let days = (secs / 86_400) as i64;
+    let (y, m, d) = civil_from_days(days);
+    format!("{y:04}{m:02}{d:02}")
+}
+
+/// Days-since-epoch (1970-01-01) -> (year, month, day), proleptic Gregorian,
+/// UTC. http://howardhinnant.github.io/date_algorithms.html#civil_from_days
+fn civil_from_days(z: i64) -> (i64, u32, u32) {
+    let z = z + 719_468;
+    let era = if z >= 0 { z } else { z - 146_096 } / 146_097;
+    let doe = (z - era * 146_097) as u64; // [0, 146096]
+    let yoe = (doe - doe / 1460 + doe / 36524 - doe / 146096) / 365; // [0, 399]
+    let y = yoe as i64 + era * 400;
+    let doy = doe - (365 * yoe + yoe / 4 - yoe / 100); // [0, 365]
+    let mp = (5 * doy + 2) / 153; // [0, 11]
+    let d = (doy - (153 * mp + 2) / 5 + 1) as u32; // [1, 31]
+    let m = if mp < 10 { mp + 3 } else { mp - 9 } as u32; // [1, 12]
+    (if m <= 2 { y + 1 } else { y }, m, d)
 }
 
 /// Literal substrings that trigger token-style redaction (consume from the
@@ -470,18 +517,8 @@ mod tests {
         std::fs::write(&new, b"").unwrap();
         // Set old mtime to 10 days ago.
         let when = std::time::SystemTime::now() - std::time::Duration::from_secs(60 * 60 * 24 * 10);
-        let secs = when
-            .duration_since(std::time::UNIX_EPOCH)
-            .unwrap()
-            .as_secs() as libc::time_t;
-        let times = [libc::timeval {
-            tv_sec: secs,
-            tv_usec: 0,
-        }; 2];
-        let cpath = std::ffi::CString::new(old.to_string_lossy().as_bytes()).unwrap();
-        unsafe {
-            libc::utimes(cpath.as_ptr(), times.as_ptr());
-        }
+        let ft = filetime::FileTime::from_system_time(when);
+        filetime::set_file_mtime(&old, ft).unwrap();
         rotate_old_logs(tmp.path(), 7).unwrap();
         assert!(!old.exists(), "old log should be removed");
         assert!(new.exists(), "new log should remain");

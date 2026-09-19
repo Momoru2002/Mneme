@@ -14,7 +14,6 @@
 //! non-fatal (it must never block app start); only filesystem errors propagate.
 
 use std::fs;
-use std::os::unix::fs::PermissionsExt;
 use std::path::Path;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
@@ -49,7 +48,12 @@ pub fn snapshot_if_due(conn: &Connection, snapshots_dir: &Path) -> Result<(), Er
         log::warn!("snapshot VACUUM INTO failed for {target_str}: {e}");
         return Ok(());
     }
-    fs::set_permissions(&target, fs::Permissions::from_mode(0o600))?;
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        fs::set_permissions(&target, fs::Permissions::from_mode(0o600))?;
+    }
+    // Windows: no mode-bit equivalent; see perms.rs module doc.
     rotate(snapshots_dir, MAX_SNAPSHOTS)?;
     Ok(())
 }
@@ -102,15 +106,8 @@ mod tests {
     fn touch(p: &std::path::Path, age_seconds: u64) {
         std::fs::write(p, b"").unwrap();
         let when = SystemTime::now() - Duration::from_secs(age_seconds);
-        let when_libc = libc::timeval {
-            tv_sec: when.duration_since(UNIX_EPOCH).unwrap().as_secs() as libc::time_t,
-            tv_usec: 0,
-        };
-        let times = [when_libc, when_libc];
-        let cpath = std::ffi::CString::new(p.to_string_lossy().as_bytes()).unwrap();
-        unsafe {
-            libc::utimes(cpath.as_ptr(), times.as_ptr());
-        }
+        let ft = filetime::FileTime::from_system_time(when);
+        filetime::set_file_mtime(p, ft).unwrap();
     }
 
     /// A minimal real SQLite DB via the bundled rusqlite (no external binary).
@@ -156,7 +153,9 @@ mod tests {
     }
 
     #[test]
+    #[cfg(unix)]
     fn snapshot_file_is_0600_and_is_a_valid_db() {
+        use std::os::unix::fs::PermissionsExt;
         let tmp = tempdir().unwrap();
         let conn = make_db(&tmp.path().join("test.db"));
         let snaps = tmp.path().join("snapshots");
@@ -172,6 +171,26 @@ mod tests {
         let mode = std::fs::metadata(&snap).unwrap().permissions().mode() & 0o777;
         assert_eq!(mode, 0o600, "snapshot must be 0600, got {mode:o}");
         // And it is itself a valid SQLite DB that passes integrity_check.
+        let snap_conn = Connection::open(&snap).unwrap();
+        assert!(integrity_check(&snap_conn).unwrap());
+    }
+
+    #[test]
+    #[cfg(windows)]
+    fn snapshot_file_is_a_valid_db() {
+        let tmp = tempdir().unwrap();
+        let conn = make_db(&tmp.path().join("test.db"));
+        let snaps = tmp.path().join("snapshots");
+        snapshot_if_due(&conn, &snaps).unwrap();
+
+        let snap = std::fs::read_dir(&snaps)
+            .unwrap()
+            .flatten()
+            .next()
+            .unwrap()
+            .path();
+        // No mode bit to assert on Windows (see perms.rs module doc) — just
+        // confirm the snapshot itself is a valid, readable SQLite DB.
         let snap_conn = Connection::open(&snap).unwrap();
         assert!(integrity_check(&snap_conn).unwrap());
     }

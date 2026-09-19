@@ -151,6 +151,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(unix)]
     fn rejects_symlink_that_escapes_the_well() {
         let well_dir = tempfile::tempdir().unwrap();
         let outside = tempfile::tempdir().unwrap();
@@ -162,6 +163,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(unix)]
     fn rejects_create_through_a_symlinked_dir_when_target_does_not_exist() {
         // D-P8SEC-1 regression: the symlink-escape guard must hold for a WRITE
         // whose final target does NOT exist yet (file_create / rename-dest /
@@ -181,6 +183,26 @@ mod tests {
             "create through a symlinked dir must be rejected even when the \
              target file does not exist yet"
         );
+    }
+
+    #[test]
+    #[cfg(windows)]
+    fn rejects_symlink_that_escapes_the_well_windows() {
+        // Creating a symlink on Windows needs either Administrator or Developer
+        // Mode enabled (GitHub Actions' windows-latest runners run elevated, so
+        // this should run there) — skip rather than fail if this environment
+        // doesn't allow it, since that's a test-environment limitation, not a
+        // bug in `resolve_well_path` itself (which only uses `canonicalize`,
+        // already cross-platform).
+        let well_dir = tempfile::tempdir().unwrap();
+        let outside = tempfile::tempdir().unwrap();
+        let well = std::fs::canonicalize(well_dir.path()).unwrap();
+        if std::os::windows::fs::symlink_dir(outside.path(), well.join("link")).is_err() {
+            eprintln!("skipping: symlink creation not permitted in this environment");
+            return;
+        }
+        let err = resolve_well_path(&well.to_string_lossy(), "link").unwrap_err();
+        assert_eq!(err, PathSafetyError::SymlinkEscape);
     }
 
     #[test]

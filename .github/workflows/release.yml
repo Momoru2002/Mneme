@@ -18,8 +18,8 @@ jobs:
             args: '--target universal-apple-darwin'
           - platform: ubuntu-22.04
             args: ''
-          # Windows build is not yet supported — the Rust core uses Unix-only
-          # filesystem-hardening APIs (mode bits, getuid). Tracked as a follow-up.
+          - platform: windows-latest
+            args: ''
 
     runs-on: ${{ matrix.platform }}
 
