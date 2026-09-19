@@ -19,6 +19,14 @@ pub enum Error {
     // Optional `hint` text appended to the message so a surfaced launch dialog
     // can be actionable (e.g. "run `chmod 600 <path>`") instead of leaving the
     // user staring at an octal mode.
+    //
+    // Only ever constructed by perms.rs's #[cfg(unix)] path (mode-bit / uid
+    // checks have no Windows equivalent — see that module's doc comment), so
+    // it is genuinely dead code in a Windows *library* build specifically
+    // (unlike the test binary, which does construct it in errors.rs's own
+    // tests below, unconditionally — clippy's dead-code check is per
+    // compilation unit, and the plain lib target doesn't include test code).
+    #[cfg_attr(windows, allow(dead_code))]
     #[error("perms: expected mode {expected:o} on {path}, found {actual:o}{}", format_hint(.hint))]
     Perms {
         path: String,
