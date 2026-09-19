@@ -12,11 +12,22 @@ export const filenameSchema = z
   .refine((s) => !s.startsWith('.'), 'Name must not start with a dot')
   .refine((s) => s !== '.' && s !== '..', 'Reserved name');
 
+// Rejects any absolute path — POSIX ("/...") or Windows (a drive letter like
+// "C:\" / "C:/", or a UNC path "\\server\share..."). The real security
+// boundary is the Rust-side resolve_well_path (which canonicalizes and
+// checks containment), not this — this only gives earlier, friendlier
+// feedback in the UI before a request round-trips to the backend.
+const WINDOWS_DRIVE_ABSOLUTE = /^[a-zA-Z]:[\\/]/;
+const WINDOWS_UNC = /^(\\\\|\/\/)/;
+
 export const relativePathSchema = z
   .string()
   .min(1, 'Path is required')
   .refine((s) => !s.includes('\0'), 'Path contains null byte')
-  .refine((s) => !s.startsWith('/'), 'Path must be relative to well root');
+  .refine(
+    (s) => !s.startsWith('/') && !WINDOWS_DRIVE_ABSOLUTE.test(s) && !WINDOWS_UNC.test(s),
+    'Path must be relative to well root',
+  );
 
 export const wellIdQuerySchema = z.object({
   wellId: z.string().uuid(),
