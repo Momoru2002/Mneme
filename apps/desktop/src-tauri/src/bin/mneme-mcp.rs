@@ -100,6 +100,11 @@ struct UpdateNoteParams {
 #[derive(Clone)]
 struct MnemeMcp {
     conn: Arc<Mutex<Connection>>,
+    // Populated in `new()` and consumed by the #[tool_handler]-generated
+    // call_tool/list_tools methods (via the tool_router field name convention
+    // those macros expect) — clippy's dead-code analysis doesn't trace through
+    // that macro-generated access, hence the explicit allow.
+    #[allow(dead_code)]
     tool_router: ToolRouter<Self>,
 }
 
