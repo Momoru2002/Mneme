@@ -98,9 +98,14 @@ mod tests {
     use tempfile::tempdir;
 
     #[test]
+    #[cfg(target_os = "macos")]
     fn icloud_path_refused() {
         // We can't create a real iCloud path in CI, so exercise the substring
         // matcher: a dir whose path contains the iCloud marker is refused.
+        // macOS-only: the matcher looks for a forward-slash-delimited macOS
+        // path pattern, which is meaningless (and, on Windows, impossible to
+        // even construct as a matching string, since paths use backslashes)
+        // on any other OS — see the module doc comment.
         let tmp = tempdir().unwrap();
         let fake_icloud = tmp
             .path()
