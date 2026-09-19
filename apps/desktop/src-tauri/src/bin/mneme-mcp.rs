@@ -20,9 +20,7 @@ use std::sync::{Arc, Mutex};
 
 use rmcp::{
     handler::server::{tool::ToolRouter, wrapper::Parameters},
-    model::{
-        CallToolResult, Content, Implementation, ServerCapabilities, ServerInfo,
-    },
+    model::{CallToolResult, ContentBlock},
     schemars, tool, tool_handler, tool_router,
     transport::stdio,
     ErrorData as McpError, ServerHandler, ServiceExt,
@@ -39,9 +37,9 @@ fn to_tool_result<T: serde::Serialize>(r: Result<T, String>) -> Result<CallToolR
         Ok(v) => {
             let text = serde_json::to_string_pretty(&v)
                 .map_err(|e| McpError::internal_error(e.to_string(), None))?;
-            Ok(CallToolResult::success(vec![Content::text(text)]))
+            Ok(CallToolResult::success(vec![ContentBlock::text(text)]))
         }
-        Err(msg) => Ok(CallToolResult::error(vec![Content::text(msg)])),
+        Err(msg) => Ok(CallToolResult::error(vec![ContentBlock::text(msg)])),
     }
 }
 
@@ -205,29 +203,16 @@ impl MnemeMcp {
     }
 }
 
-#[tool_handler]
-impl ServerHandler for MnemeMcp {
-    fn get_info(&self) -> ServerInfo {
-        ServerInfo {
-            server_info: Implementation {
-                name: "mneme".into(),
-                version: env!("CARGO_PKG_VERSION").into(),
-                ..Default::default()
-            },
-            instructions: Some(
-                "Mneme is the user's local knowledge vault: folders of plain markdown notes \
-                 (Wells), like Obsidian. Call list_wells first to get a well_id, then use \
-                 search_notes / read_note / list_notes to find and read context before \
-                 answering, and create_note / update_note to write notes back — e.g. task \
-                 lists, summaries, or follow-ups the user asked you to save. Paths are always \
-                 relative to the well root (e.g. \"todo/today.md\"), never absolute."
-                    .into(),
-            ),
-            capabilities: ServerCapabilities::builder().enable_tools().build(),
-            ..Default::default()
-        }
-    }
-}
+#[tool_handler(
+    name = "mneme",
+    instructions = "Mneme is the user's local knowledge vault: folders of plain markdown notes \
+                    (Wells), like Obsidian. Call list_wells first to get a well_id, then use \
+                    search_notes / read_note / list_notes to find and read context before \
+                    answering, and create_note / update_note to write notes back — e.g. task \
+                    lists, summaries, or follow-ups the user asked you to save. Paths are always \
+                    relative to the well root (e.g. \"todo/today.md\"), never absolute."
+)]
+impl ServerHandler for MnemeMcp {}
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
