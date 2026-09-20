@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Outlet, createRootRouteWithContext } from '@tanstack/react-router';
 import type React from 'react';
+import { AppLockGate } from '../components/AppLockGate.tsx';
 import { WebAuthExpired } from '../components/WebAuthExpired.tsx';
 import { SettingsBootstrap } from '../components/settings/SettingsBootstrap.tsx';
 
@@ -21,9 +22,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 function RootLayout(): React.JSX.Element {
   return (
     <QueryClientProvider client={queryClient}>
-      <SettingsBootstrap />
-      <WebAuthExpired />
-      <Outlet />
+      <AppLockGate>
+        <SettingsBootstrap />
+        <WebAuthExpired />
+        <Outlet />
+      </AppLockGate>
     </QueryClientProvider>
   );
 }

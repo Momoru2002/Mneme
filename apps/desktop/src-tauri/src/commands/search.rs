@@ -6,6 +6,7 @@
 
 use tauri::State;
 
+use crate::auth::AuthState;
 use crate::core::search as core_search;
 use crate::db::Db;
 use crate::dto::{SearchOptions, SearchResponse};
@@ -17,11 +18,13 @@ use crate::dto::{SearchOptions, SearchResponse};
 #[tauri::command]
 pub async fn search_query(
     db: State<'_, Db>,
+    auth: State<'_, std::sync::Arc<AuthState>>,
     well_id: String,
     q: String,
     include_content: Option<bool>,
     options: Option<SearchOptions>,
 ) -> Result<SearchResponse, String> {
+    crate::auth::require_unlocked(&auth)?;
     let conn = crate::commands::lock_db(&db)?;
     core_search::search_query(
         &conn,

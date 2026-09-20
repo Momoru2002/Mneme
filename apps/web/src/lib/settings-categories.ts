@@ -13,6 +13,9 @@ export const BASE_CATEGORIES = [
 
 // The full desktop list. `web-access` toggles the server itself, so it is
 // desktop-only and hidden when the same bundle runs in a browser (web mode).
+// `security` (the app-lock) is desktop-only for the same reason: there is no
+// unlock path from a browser tab, so showing a "change password" control
+// there would only ever produce a confusing "locked" error.
 export const DESKTOP_CATEGORIES = [
   { id: 'general', label: 'General' },
   { id: 'editor', label: 'Editor' },
@@ -21,6 +24,7 @@ export const DESKTOP_CATEGORIES = [
   { id: 'keyboard', label: 'Keyboard' },
   { id: 'about', label: 'About' },
   { id: 'web-access', label: 'Web Access' },
+  { id: 'security', label: 'Security' },
 ] as const;
 
 export type CategoryId = (typeof DESKTOP_CATEGORIES)[number]['id'];

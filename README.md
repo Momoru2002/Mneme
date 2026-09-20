@@ -1,8 +1,8 @@
 # Mneme
 
 **A local-first knowledge vault.** Keep your notes as plain Markdown files on
-disk, with full-text search, templates, multi-user access control, and a
-tamper-evident audit log — all on your machine, no server, no network by default.
+disk, with full-text search, templates, and an app-lock password — all on your
+machine, no server, no network by default.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 ![Platforms](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows%20(beta)-lightgrey)
@@ -13,11 +13,11 @@ tamper-evident audit log — all on your machine, no server, no network by defau
 
 Mneme (named after the Greek Titan of memory — root of the word "mnemonic")
 is a desktop app that turns any folder of Markdown files — what it calls a
-**Well** — into a fast, searchable, access-controlled knowledge base, blending
-Obsidian's plain-file philosophy with a Mimir-style single-source-of-truth vault.
+**Well** — into a fast, searchable knowledge base, blending Obsidian's
+plain-file philosophy with a Mimir-style single-source-of-truth vault.
 You point it at a directory of `.md` files and keep writing in plain Markdown;
-Mneme adds search, templates, user roles, and an audit trail on top, without
-ever moving your files off your computer.
+Mneme adds search, templates, and an app-lock password on top, without ever
+moving your files off your computer.
 
 Everything runs inside a single application: a native window rendering a React
 interface, backed by a compiled Rust core that owns your data. There is no
@@ -30,10 +30,10 @@ connection unless you explicitly turn one on.
   you choose. Open them in any other editor any time; Mneme never locks them away.
 - **Full-text search** — instantly find notes across the active Well.
 - **Templates** — scaffold new notes from reusable templates.
-- **Multi-user access control** — role-based permissions gate every change, so a
-  shared Well can have readers, editors, and admins.
-- **Tamper-evident audit log** — every change is recorded in an append-only log you
-  can review.
+- **App lock** — a single local password, required on every launch (and honored by
+  Web Access too — a locked app refuses requests even with a valid link/QR code).
+  Hashed with argon2id; the password itself is never stored, only its hash, and
+  the unlocked state lives only in memory for that run of the app.
 - **Private by default** — no network access until you opt in.
 - **Web access (opt-in)** — start a local companion server to open your Well in a
   browser tab, with an option to allow other devices on the same network (e.g.
@@ -83,9 +83,10 @@ Releases are not yet code-signed, so your OS may warn on first launch:
 
 ## Getting started
 
-On first launch Mneme shows a one-time setup screen to create your admin account,
-then opens to **Add your first Well**. Choose a folder of Markdown files (or an
-empty folder to start fresh) and you are ready to write, search, and organize.
+On first launch Mneme asks you to create an app-lock password (see
+[App lock](#features) above), then opens to **Add your first Well**. Choose a
+folder of Markdown files (or an empty folder to start fresh) and you are ready
+to write, search, and organize.
 
 ## How it works
 
@@ -101,8 +102,7 @@ Mneme is built as a single desktop process:
 │  ┌───────────────────────┴────────────────────────┐ │
 │  │ Rust core                                        │ │
 │  │   auth · wells · files · folders · search ·      │ │
-│  │   templates · settings · users · audit           │ │
-│  │   (every change checked against your role)       │ │
+│  │   templates · settings                           │ │
 │  └───────────────────────┬────────────────────────┘ │
 │  ┌───────────────────────┴────────────────────────┐ │
 │  │ Embedded SQLite index   (~/.mneme/mneme.db)      │ │
@@ -111,21 +111,32 @@ Mneme is built as a single desktop process:
 ```
 
 Your Markdown stays in your Well folder; a private SQLite database under `~/.mneme`
-holds the search index, accounts, and settings.
+holds the search index, your app-lock password hash, and settings.
 
 ### Built with security in mind
 
 - The UI talks to the core through in-process calls — no local server is
   running unless you explicitly turn on Web Access (see Features above), which
   binds to loopback only unless you opt into LAN mode.
-- Passwords are hashed with **argon2id**; sessions live only in memory and end when
-  you close the app.
+- **App lock**: one local password, required on every launch and re-required
+  after "Lock now" — see [Features](#features) above. Hashed with **argon2id**;
+  the plaintext password is never stored, only its hash, and the unlocked
+  state lives only in memory for that run of the app. This gates every command
+  that touches note content, including Web Access requests — a locked app
+  refuses those too, even with an otherwise-valid session token.
 - `~/.mneme` is created private (`0700` dir / `0600` DB file on macOS and Linux;
   Windows relies on your user profile's own access restrictions instead — see
   the Windows note above). Mneme refuses to run if that folder lives inside
   cloud storage, which would corrupt the database.
 - Every file operation is confined to the active Well's folder — path traversal
   (`..`), absolute-path escapes, and symlink tricks are all rejected.
+
+**Honesty note:** the database schema still has `users`/`role` and `audit_log`
+tables left over from an earlier multi-user design that was removed (see
+`rbac.rs`'s doc comment in the source) — they exist, but nothing in the app
+currently writes meaningful audit entries or enforces per-role permissions.
+Earlier versions of this README claimed both as working features; they
+weren't, and this section now only describes what actually runs.
 
 ## Connecting an AI assistant (MCP)
 

@@ -2,6 +2,7 @@ use std::sync::Mutex;
 
 use tauri::State;
 
+use crate::auth::AuthState;
 use crate::db::Db;
 
 /// Runtime handle for the localhost companion server. `None` when web mode is off.
@@ -28,6 +29,7 @@ pub async fn web_mode_enable(
     lan: bool,
     db: State<'_, Db>,
     web: State<'_, WebMode>,
+    auth: State<'_, std::sync::Arc<AuthState>>,
 ) -> Result<WebModeInfo, String> {
     let mut guard = web
         .0
@@ -41,7 +43,8 @@ pub async fn web_mode_enable(
         });
     }
     let db_arc = std::sync::Arc::clone(&db.0);
-    let srv = crate::webserver::start(db_arc, lan)?;
+    let auth_arc = std::sync::Arc::clone(&auth);
+    let srv = crate::webserver::start(db_arc, lan, auth_arc)?;
     let url = format!("http://127.0.0.1:{}", srv.port);
     let lan_url = srv.lan_ip.as_ref().map(|ip| format!("http://{ip}:{}", srv.port));
     *guard = Some(srv);

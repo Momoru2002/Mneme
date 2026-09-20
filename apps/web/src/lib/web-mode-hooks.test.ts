@@ -52,15 +52,17 @@ describe('Settings category list — Web Access visibility', () => {
     // Every browser-safe (base) category is also present on desktop.
     for (const id of baseIds) expect(desktopIds).toContain(id);
 
-    // The web-toggle surface is desktop-only — present on desktop, ABSENT from
-    // the browser list (so a browser user can't reach it).
-    for (const id of ['web-access']) {
+    // The web-toggle surface and the app-lock are both desktop-only — present
+    // on desktop, ABSENT from the browser list (so a browser user can't reach
+    // either: web-access controls the server itself, and security has no
+    // unlock path over that transport anyway).
+    for (const id of ['web-access', 'security']) {
       expect(desktopIds).toContain(id);
       expect(baseIds).not.toContain(id);
     }
 
-    // web-access stays last in the desktop list.
-    expect(desktopIds[desktopIds.length - 1]).toBe('web-access');
+    // web-access and security stay last, in that order, in the desktop list.
+    expect(desktopIds.slice(-2)).toEqual(['web-access', 'security']);
   });
 
   it('browser context hides web-access (desktop-only surface)', () => {

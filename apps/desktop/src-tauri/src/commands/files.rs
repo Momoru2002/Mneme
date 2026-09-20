@@ -8,6 +8,7 @@
 
 use tauri::State;
 
+use crate::auth::AuthState;
 use crate::core::files as core_files;
 use crate::db::Db;
 use crate::dto::{
@@ -20,9 +21,11 @@ use super::lock_db;
 #[tauri::command]
 pub async fn files_read(
     db: State<'_, Db>,
+    auth: State<'_, std::sync::Arc<AuthState>>,
     well_id: String,
     path: String,
 ) -> Result<FileContent, String> {
+    crate::auth::require_unlocked(&auth)?;
     let conn = lock_db(&db)?;
     core_files::files_read(&conn, &well_id, &path)
 }
@@ -30,9 +33,11 @@ pub async fn files_read(
 #[tauri::command]
 pub async fn files_create(
     db: State<'_, Db>,
+    auth: State<'_, std::sync::Arc<AuthState>>,
     well_id: String,
     input: FileCreateInput,
 ) -> Result<SaveFileResponse, String> {
+    crate::auth::require_unlocked(&auth)?;
     let conn = lock_db(&db)?;
     core_files::files_create(&conn, &well_id, &input.path, &input.content)
 }
@@ -40,9 +45,11 @@ pub async fn files_create(
 #[tauri::command]
 pub async fn files_update(
     db: State<'_, Db>,
+    auth: State<'_, std::sync::Arc<AuthState>>,
     well_id: String,
     input: FileUpdateInput,
 ) -> Result<SaveFileResponse, String> {
+    crate::auth::require_unlocked(&auth)?;
     let conn = lock_db(&db)?;
     core_files::files_update(
         &conn,
@@ -54,7 +61,13 @@ pub async fn files_update(
 }
 
 #[tauri::command]
-pub async fn files_remove(db: State<'_, Db>, well_id: String, path: String) -> Result<(), String> {
+pub async fn files_remove(
+    db: State<'_, Db>,
+    auth: State<'_, std::sync::Arc<AuthState>>,
+    well_id: String,
+    path: String,
+) -> Result<(), String> {
+    crate::auth::require_unlocked(&auth)?;
     let conn = lock_db(&db)?;
     core_files::files_remove(&conn, &well_id, &path)
 }
@@ -62,9 +75,11 @@ pub async fn files_remove(db: State<'_, Db>, well_id: String, path: String) -> R
 #[tauri::command]
 pub async fn files_rename(
     db: State<'_, Db>,
+    auth: State<'_, std::sync::Arc<AuthState>>,
     well_id: String,
     input: FileRenameInput,
 ) -> Result<FileRenameResponse, String> {
+    crate::auth::require_unlocked(&auth)?;
     let conn = lock_db(&db)?;
     core_files::files_rename(&conn, &well_id, &input.old_path, &input.new_path)
 }
@@ -72,9 +87,11 @@ pub async fn files_rename(
 #[tauri::command]
 pub async fn files_move(
     db: State<'_, Db>,
+    auth: State<'_, std::sync::Arc<AuthState>>,
     well_id: String,
     input: FileMoveInput,
 ) -> Result<FileMoveResponse, String> {
+    crate::auth::require_unlocked(&auth)?;
     let conn = lock_db(&db)?;
     core_files::files_move(&conn, &well_id, &input.source_path, &input.dest_path)
 }
@@ -82,9 +99,11 @@ pub async fn files_move(
 #[tauri::command]
 pub async fn files_duplicate(
     db: State<'_, Db>,
+    auth: State<'_, std::sync::Arc<AuthState>>,
     well_id: String,
     input: FileDuplicateInput,
 ) -> Result<SaveFileResponse, String> {
+    crate::auth::require_unlocked(&auth)?;
     let conn = lock_db(&db)?;
     core_files::files_duplicate(&conn, &well_id, &input.path)
 }

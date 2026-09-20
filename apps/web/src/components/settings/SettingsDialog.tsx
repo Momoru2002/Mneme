@@ -21,6 +21,7 @@ import { AppearanceSection } from './sections/AppearanceSection.tsx';
 import { EditorSection } from './sections/EditorSection.tsx';
 import { GeneralSection } from './sections/GeneralSection.tsx';
 import { KeyboardSection } from './sections/KeyboardSection.tsx';
+import { SecuritySection } from './sections/SecuritySection.tsx';
 import { WebAccessSection } from './sections/WebAccessSection.tsx';
 import { WellsSection } from './sections/WellsSection.tsx';
 
@@ -102,6 +103,7 @@ export function SettingsDialog({ open, onOpenChange }: Props): React.JSX.Element
             {active === 'keyboard' && <KeyboardSection />}
             {active === 'about' && <AboutSection />}
             {active === 'web-access' && <WebAccessSection />}
+            {active === 'security' && <SecuritySection />}
           </div>
         </div>
 

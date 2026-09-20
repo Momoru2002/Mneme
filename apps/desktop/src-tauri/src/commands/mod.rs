@@ -1,5 +1,6 @@
 //! Tauri command surface — thin `#[tauri::command]` wrappers over `crate::services`.
 
+pub mod auth;
 pub mod files;
 pub mod folders;
 pub mod search;

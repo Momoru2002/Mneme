@@ -7,6 +7,7 @@
 
 use tauri::State;
 
+use crate::auth::AuthState;
 use crate::core::settings as core_settings;
 use crate::db::Db;
 use crate::dto::{SettingsResponse, UserPrefsPatch};
@@ -14,7 +15,11 @@ use crate::dto::{SettingsResponse, UserPrefsPatch};
 use super::lock_db;
 
 #[tauri::command]
-pub async fn settings_get(db: State<'_, Db>) -> Result<SettingsResponse, String> {
+pub async fn settings_get(
+    db: State<'_, Db>,
+    auth: State<'_, std::sync::Arc<AuthState>>,
+) -> Result<SettingsResponse, String> {
+    crate::auth::require_unlocked(&auth)?;
     let conn = lock_db(&db)?;
     core_settings::settings_get(&conn)
 }
@@ -22,8 +27,10 @@ pub async fn settings_get(db: State<'_, Db>) -> Result<SettingsResponse, String>
 #[tauri::command]
 pub async fn settings_update(
     db: State<'_, Db>,
+    auth: State<'_, std::sync::Arc<AuthState>>,
     patch: UserPrefsPatch,
 ) -> Result<SettingsResponse, String> {
+    crate::auth::require_unlocked(&auth)?;
     let conn = lock_db(&db)?;
     core_settings::settings_update(&conn, &patch)
 }

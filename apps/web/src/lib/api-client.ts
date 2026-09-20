@@ -196,6 +196,17 @@ export const api = {
     uninstallAndWipe: (): Promise<void> => call<void>('uninstall_and_wipe'),
   },
 
+  /** Tauri-only — the app-lock. Not reachable via web mode's HTTP dispatch by
+   * design: unlocking requires being at the desktop app itself. */
+  auth: {
+    status: (): Promise<AuthStatus> => call<AuthStatus>('auth_status'),
+    setPassword: (password: string): Promise<void> => call<void>('auth_set_password', { password }),
+    unlock: (password: string): Promise<void> => call<void>('auth_unlock', { password }),
+    lock: (): Promise<void> => call<void>('auth_lock'),
+    changePassword: (currentPassword: string, newPassword: string): Promise<void> =>
+      call<void>('auth_change_password', { currentPassword, newPassword }),
+  },
+
   /** Tauri-only commands — only invoke these from desktop context (isTauri()). */
   webMode: {
     status: (): Promise<WebModeInfo> => call<WebModeInfo>('web_mode_status'),
@@ -205,6 +216,12 @@ export const api = {
     openBrowser: (): Promise<void> => call<void>('web_mode_open_browser'),
   },
 };
+
+export interface AuthStatus {
+  /** Whether a password has ever been set. `false` → show a "create a password" screen. */
+  isSetUp: boolean;
+  unlocked: boolean;
+}
 
 export interface WebModeInfo {
   running: boolean;

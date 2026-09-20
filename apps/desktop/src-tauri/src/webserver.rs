@@ -69,7 +69,11 @@ fn detect_lan_ip() -> Option<std::net::IpAddr> {
 ///   network (e.g. a phone on the same Wi-Fi) can reach it. Still requires
 ///   the same bearer token (W2) and the Host allowlist is widened only to
 ///   this machine's own detected LAN IP (W13) — never a wildcard.
-pub fn start(db: Arc<Mutex<Connection>>, lan: bool) -> Result<RunningServer, String> {
+pub fn start(
+    db: Arc<Mutex<Connection>>,
+    lan: bool,
+    auth: Arc<crate::auth::AuthState>,
+) -> Result<RunningServer, String> {
     let lan_ip = if lan {
         Some(detect_lan_ip().ok_or("no local network connection was found")?)
     } else {
@@ -85,10 +89,17 @@ pub fn start(db: Arc<Mutex<Connection>>, lan: bool) -> Result<RunningServer, Str
     };
     let token = random_token_hex();
     let server = Arc::new(server);
-    let (srv_thread, tok_thread, db_thread, lan_ip_thread) =
-        (Arc::clone(&server), token.clone(), db, lan_ip);
+    let (srv_thread, tok_thread, db_thread, lan_ip_thread, auth_thread) =
+        (Arc::clone(&server), token.clone(), db, lan_ip, auth);
     let handle = std::thread::spawn(move || {
-        accept_loop(&srv_thread, &tok_thread, port, db_thread, lan_ip_thread)
+        accept_loop(
+            &srv_thread,
+            &tok_thread,
+            port,
+            db_thread,
+            lan_ip_thread,
+            auth_thread,
+        )
     });
     Ok(RunningServer {
         port,
@@ -113,9 +124,10 @@ fn accept_loop(
     port: u16,
     db: Arc<Mutex<Connection>>,
     lan_ip: Option<std::net::IpAddr>,
+    auth: Arc<crate::auth::AuthState>,
 ) {
     for request in server.incoming_requests() {
-        handle_request(request, token, port, &db, lan_ip);
+        handle_request(request, token, port, &db, lan_ip, &auth);
     }
 }
 
@@ -523,6 +535,7 @@ fn handle_request(
     port: u16,
     db: &Arc<Mutex<Connection>>,
     lan_ip: Option<std::net::IpAddr>,
+    auth_state: &crate::auth::AuthState,
 ) {
     let method = request.method().as_str();
     let url = request.url().to_string();
@@ -536,6 +549,17 @@ fn handle_request(
                 return;
             }
             Ok(()) => {
+                // The app-lock gate (W14): a valid bearer token proves the
+                // caller was TRUSTED once (the token was only ever handed out
+                // via "Open in browser" or a LAN-mode copy/QR action on this
+                // machine), but a leaked/observed token shouldn't still work
+                // once the user has locked the app — check AFTER the token
+                // check (so a wrong-token request still gets 401, not this)
+                // but BEFORE touching any note data.
+                if !auth_state.is_unlocked() {
+                    respond(request, 403, "locked: unlock the app before doing this");
+                    return;
+                }
                 // Extract command name from URL (strip leading "/api/").
                 let cmd = url.trim_start_matches("/api/");
                 // W12: reject declared-oversized bodies early with 413.
@@ -662,7 +686,8 @@ pub(crate) mod tests {
     #[test]
     fn start_binds_loopback_and_reports_port() {
         let db = Arc::new(Mutex::new(open_in_memory().unwrap()));
-        let srv = start(db, false).unwrap();
+        let auth = Arc::new(crate::auth::AuthState::new(true));
+        let srv = start(db, false, auth).unwrap();
         assert!(srv.port > 0, "OS must assign a real port");
         assert_eq!(srv.token.len(), 64, "256-bit token, hex = 64 chars");
         assert!(srv.lan_ip.is_none(), "loopback mode must not report a LAN ip");

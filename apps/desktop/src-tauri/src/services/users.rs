@@ -42,6 +42,25 @@ pub fn insert_user(conn: &Connection, u: &NewUser) -> Result<(), DbError> {
     Ok(())
 }
 
+/// The owner's current `password_hash` — empty string means "no app-lock
+/// password set yet" (the dormant-owner default from `services::owner`).
+pub fn get_password_hash(conn: &Connection, user_id: &str) -> Result<String, DbError> {
+    Ok(conn.query_row(
+        "SELECT password_hash FROM users WHERE id = ?1",
+        [user_id],
+        |r| r.get(0),
+    )?)
+}
+
+pub fn set_password_hash(conn: &Connection, user_id: &str, hash: &str) -> Result<(), DbError> {
+    let now = crate::clock::now_ms();
+    conn.execute(
+        "UPDATE users SET password_hash = ?1, updated_at = ?2 WHERE id = ?3",
+        rusqlite::params![hash, now, user_id],
+    )?;
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -1,3 +1,4 @@
+mod auth;
 mod clock;
 mod commands;
 pub mod core;
@@ -16,8 +17,9 @@ mod webserver;
 
 use std::sync::{Arc, Mutex};
 
-use tauri::Manager;
+use tauri::{Manager, State};
 
+use crate::auth::AuthState;
 use crate::db::Db;
 
 // Support/diagnostics commands (menu keeper). Thin wrappers that map the shell
@@ -25,24 +27,34 @@ use crate::db::Db;
 // yet — they back a future native menu / settings "support" surface — but they
 // are registered so that surface only has to call `invoke`, not re-wire Rust.
 #[tauri::command]
-async fn reveal_logs(app: tauri::AppHandle) -> Result<(), String> {
+async fn reveal_logs(app: tauri::AppHandle, auth: State<'_, std::sync::Arc<AuthState>>) -> Result<(), String> {
+    crate::auth::require_unlocked(&auth)?;
     menu::reveal_logs(app).map_err(|e| e.to_string())
 }
 
 #[tauri::command]
-async fn copy_diagnostic_bundle(app: tauri::AppHandle) -> Result<String, String> {
+async fn copy_diagnostic_bundle(
+    app: tauri::AppHandle,
+    auth: State<'_, std::sync::Arc<AuthState>>,
+) -> Result<String, String> {
+    crate::auth::require_unlocked(&auth)?;
     menu::copy_diagnostic_bundle(app)
         .map(|p| p.to_string_lossy().into_owned())
         .map_err(|e| e.to_string())
 }
 
 #[tauri::command]
-async fn uninstall_and_wipe(app: tauri::AppHandle) -> Result<(), String> {
+async fn uninstall_and_wipe(
+    app: tauri::AppHandle,
+    auth: State<'_, std::sync::Arc<AuthState>>,
+) -> Result<(), String> {
+    crate::auth::require_unlocked(&auth)?;
     menu::uninstall_and_wipe(app).map_err(|e| e.to_string())
 }
 
 #[tauri::command]
-async fn open_macos_privacy_settings() -> Result<(), String> {
+async fn open_macos_privacy_settings(auth: State<'_, std::sync::Arc<AuthState>>) -> Result<(), String> {
+    crate::auth::require_unlocked(&auth)?;
     menu::open_privacy_settings().map_err(|e| e.to_string())
 }
 
@@ -98,7 +110,15 @@ pub fn run() {
             // Auth was removed — resolve (or create) the single local "owner"
             // identity once at startup so it exists before any command runs.
             // Idempotent: adopts an existing lone user on a dev DB.
-            services::owner::ensure_owner(&conn)?;
+            let owner_id = services::owner::ensure_owner(&conn)?;
+
+            // App-lock: unlocked by default only if no password has ever been
+            // set (first run — nothing to protect yet, the UI shows a
+            // "create a password" screen instead of an unlock screen).
+            // Otherwise every launch starts locked, requiring the password
+            // again — the lock is per-process-lifetime, never persisted.
+            let has_password = !services::users::get_password_hash(&conn, &owner_id)?.is_empty();
+            app.manage(Arc::new(AuthState::new(!has_password)));
 
             // Web mode shares the SAME connection with its localhost server thread,
             // so the Db wraps an Arc<Mutex<_>> (web-mode change, superset of the
@@ -109,6 +129,11 @@ pub fn run() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
+            commands::auth::auth_status,
+            commands::auth::auth_set_password,
+            commands::auth::auth_unlock,
+            commands::auth::auth_lock,
+            commands::auth::auth_change_password,
             commands::settings::settings_get,
             commands::settings::settings_update,
             commands::wells::wells_list,
