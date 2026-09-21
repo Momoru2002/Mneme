@@ -154,8 +154,11 @@ separate copy of your notes: it reads and writes the same
 `~/.mneme/mneme.db` and the same Well folders on disk, live.
 
 **Tools it exposes:** `list_wells`, `search_notes`, `read_note`, `list_notes`,
-`create_note`, `update_note`, `list_templates`. Ask your assistant to list its
-available tools once connected to confirm.
+`create_note`, `update_note`, `append_to_note`, `delete_note`, `create_folder`,
+`list_templates`. `well_id` is optional on every tool that needs one — it
+defaults to whichever Well is active in the desktop app, so a single-Well user
+never has to pass it. Ask your assistant to list its available tools once
+connected to confirm.
 
 ### Setup
 
@@ -165,10 +168,18 @@ available tools once connected to confirm.
    cargo build --release --bin mneme-mcp
    ```
    The binary lands at `target/release/mneme-mcp` (`.exe` on Windows).
-2. Point your MCP client at that path. For **Claude Desktop**, edit its config
-   file (Settings → Developer → Edit Config, or find it directly at
-   `~/Library/Application Support/Claude/claude_desktop_config.json` on macOS,
-   `%APPDATA%\Claude\claude_desktop_config.json` on Windows) and add:
+2. Point your MCP client at that path:
+
+   **Claude Code** — one command, no file editing:
+   ```sh
+   claude mcp add --transport stdio mneme --scope user -- /absolute/path/to/mneme-mcp
+   ```
+   Verify with `claude mcp list`, then `/mcp` inside a `claude` session to
+   confirm it's connected.
+
+   **Claude Desktop** — edit its config file, then fully quit and reopen the
+   app (closing the window is not enough — quit from the system tray/menu
+   bar icon):
    ```json
    {
      "mcpServers": {
@@ -178,13 +189,26 @@ available tools once connected to confirm.
      }
    }
    ```
-   Restart Claude Desktop; a working connection shows an 🔨 tools icon with
-   Mneme's tools listed.
+   If you already have other keys in that file (some builds also store UI
+   preferences there), add `"mcpServers"` alongside them — don't replace the
+   whole file. Open the config from **Settings → Developer → Edit Config**
+   inside the app rather than hunting for the file yourself where possible.
+   On Windows, if that button doesn't find it, Claude Desktop's newer builds
+   are installed as an MSIX package and the real file lives at
+   `%LOCALAPPDATA%\Packages\<Claude package folder>\LocalCache\Roaming\Claude\claude_desktop_config.json`
+   — not the plain `%APPDATA%\Claude\` path older docs mention.
 3. Run Mneme's desktop app as usual — `mneme-mcp` reads/writes the same
    database, so notes the assistant creates show up there immediately, and
    vice versa. The desktop app does not need to be running for `mneme-mcp`
    itself to work (SQLite doesn't need a "server" to be up), but you'll want
    it open to actually see what the assistant is doing.
+
+**If a client reports 0 tools or can't connect:** `mneme-mcp` is spawned with
+no visible terminal, so there's usually no error message anywhere in the
+client UI. Check `~/.mneme/mneme-mcp.log` — every startup, every tool call,
+and any fatal error (e.g. it couldn't open Mneme's database) is appended
+there with a timestamp, which is otherwise the only way to see what actually
+happened.
 
 Since this connects over **stdio only** (no network port), it only works for
 an AI client running on the same machine — this is a deliberate scope

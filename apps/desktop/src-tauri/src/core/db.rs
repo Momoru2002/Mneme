@@ -22,3 +22,12 @@ pub fn open_app_db() -> Result<Connection, String> {
     let home = crate::perms::mneme_home();
     crate::db::open_app_db(&home).map_err(|e| e.to_string())
 }
+
+/// Path for `mneme-mcp`'s own log file — `~/.mneme/mneme-mcp.log`. That
+/// binary can't reach `perms::mneme_home()` directly (private module, and
+/// `mneme-mcp` links `mneme_lib` as an external crate — see this file's own
+/// doc comment), so this is its second sanctioned crack in that wall. Not
+/// used by the desktop app itself, which has its own `logging.rs`.
+pub fn mcp_log_path() -> std::path::PathBuf {
+    crate::perms::mneme_home().join("mneme-mcp.log")
+}

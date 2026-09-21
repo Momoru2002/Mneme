@@ -30,6 +30,23 @@ pub fn folders_create(
     folders::folder_create(conn, well_id, input).map_err(|e| e.client_message())
 }
 
+/// Same as [`folders_create`] but taking a plain path string — for callers
+/// outside this crate (the `mneme-mcp` bin target) that can't name
+/// `FolderCreateInput` since the `dto` module is private.
+pub fn folders_create_at(
+    conn: &Connection,
+    well_id: &str,
+    path: &str,
+) -> Result<FolderCreateResponse, String> {
+    folders_create(
+        conn,
+        well_id,
+        &FolderCreateInput {
+            path: path.to_string(),
+        },
+    )
+}
+
 pub fn folders_remove(
     conn: &Connection,
     well_id: &str,
