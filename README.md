@@ -42,6 +42,11 @@ connection unless you explicitly turn one on.
   other [MCP](https://modelcontextprotocol.io)-capable assistant directly to a
   Well over stdio: it can search, read, and write your notes as a second brain.
   See [Connecting an AI assistant](#connecting-an-ai-assistant-mcp) below.
+- **Multi-device via your own sync tool** — no built-in sync engine (on purpose —
+  see below), but a Well is just a folder of plain `.md` files, so putting one
+  in Dropbox/iCloud/Syncthing/etc. and adding it as a Well on another device
+  works today. See [Using the same Well on multiple
+  devices](#using-the-same-well-on-multiple-devices) below.
 - **Cross-platform** — native builds for macOS, Linux, and Windows (Windows
   support is new — see the note below).
 
@@ -186,6 +191,36 @@ an AI client running on the same machine — this is a deliberate scope
 decision, not a current limitation to be lifted later; see [Web
 access](#features) above if you specifically want a different device to
 reach a Well.
+
+## Using the same Well on multiple devices
+
+Mneme has no built-in sync engine, and that's deliberate — the original
+project this was forked from tried a git-based sync feature and dropped it.
+Hand-rolled sync of a mutable SQLite index alongside plain files is exactly
+the kind of thing that turns a small bug into corrupted or lost notes, and
+that risk isn't worth it when a much simpler option already works:
+
+**Put your Well's folder inside whatever file-sync tool you already use** —
+Dropbox, iCloud Drive, OneDrive, Syncthing, a self-hosted Nextcloud, etc. A
+Well is just a folder of plain `.md` files; nothing about it requires being
+in any particular location, and Mneme always reads a Well's files and search
+results live off disk (no separate index that could go stale), so changes
+synced in from another device show up as soon as you look. Add the same
+folder as a Well on each device (pointing at wherever your sync tool puts it
+locally) and you're done — the actual syncing is handled by tools with years
+of production hardening behind them, not by Mneme.
+
+(The ONE place Mneme does refuse cloud storage is `~/.mneme` — its own
+private SQLite database, which is not inside your Well and which you'd never
+want to sync anyway. That restriction has nothing to do with your notes.)
+
+**The trade-off to know about:** if you edit the *same* note on two devices
+before they've synced with each other, you'll get an ordinary sync
+conflict from whichever tool you're using (e.g. a "conflicted copy" file from
+Dropbox) — Mneme has no special merge logic for that, and neither does
+Obsidian or any other plain-file notes app in this situation. In practice
+this only comes up if you're actively editing the same file on two machines
+at once, which is uncommon for a single-user notes vault.
 
 ## Build from source
 
