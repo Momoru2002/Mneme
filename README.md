@@ -162,12 +162,18 @@ connected to confirm.
 
 ### Setup
 
-1. Build it alongside the desktop app:
+1. **Find the server.** `mneme-mcp` is bundled with the desktop installers and
+   sits next to the Mneme executable. The easiest way to get its exact path
+   (plus copy-paste snippets for the clients below) is **Settings → AI
+   Assistants** inside the app. Building from source instead?
    ```sh
    cd apps/desktop/src-tauri
    cargo build --release --bin mneme-mcp
    ```
    The binary lands at `target/release/mneme-mcp` (`.exe` on Windows).
+   *(Linux AppImage users: the AppImage mounts itself somewhere new on every
+   launch, so its bundled path isn't stable — use the `.deb`/`.rpm`, or copy
+   `mneme-mcp` to a permanent location first.)*
 2. Point your MCP client at that path:
 
    **Claude Code** — one command, no file editing:
@@ -258,19 +264,21 @@ at once, which is uncommon for a single-user notes vault.
 
 ```sh
 pnpm install
+bash scripts/prepare-sidecar.sh --placeholder   # once: Tauri needs the mneme-mcp sidecar file to exist
 pnpm --filter @mneme/desktop dev
 ```
 
 ### Build
 
 ```sh
-pnpm --filter @mneme/desktop build   # produces the installer(s) for your OS
+bash scripts/prepare-sidecar.sh --host        # builds mneme-mcp and stages it for the installer
+pnpm --filter @mneme/desktop build            # produces the installer(s) for your OS
 ```
 
 ### Test & lint
 
 ```sh
-# Rust core:
+# Rust core (run `bash scripts/prepare-sidecar.sh --placeholder` once first):
 cd apps/desktop/src-tauri && cargo test && cargo clippy --all-targets --all-features
 
 # Web UI:

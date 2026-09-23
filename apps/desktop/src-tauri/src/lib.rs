@@ -134,6 +134,7 @@ pub fn run() {
             commands::auth::auth_unlock,
             commands::auth::auth_lock,
             commands::auth::auth_change_password,
+            commands::mcp::mcp_binary_info,
             commands::settings::settings_get,
             commands::settings::settings_update,
             commands::wells::wells_list,

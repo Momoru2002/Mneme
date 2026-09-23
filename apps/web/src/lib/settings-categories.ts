@@ -13,6 +13,8 @@ export const BASE_CATEGORIES = [
 
 // The full desktop list. `web-access` toggles the server itself, so it is
 // desktop-only and hidden when the same bundle runs in a browser (web mode).
+// `mcp` (AI Assistants) is desktop-only: it reads the installed sidecar's path via a
+// Tauri command that has no web-mode equivalent.
 // `security` (the app-lock) is desktop-only for the same reason: there is no
 // unlock path from a browser tab, so showing a "change password" control
 // there would only ever produce a confusing "locked" error.
@@ -23,6 +25,7 @@ export const DESKTOP_CATEGORIES = [
   { id: 'wells', label: 'Wells & Permissions' },
   { id: 'keyboard', label: 'Keyboard' },
   { id: 'about', label: 'About' },
+  { id: 'mcp', label: 'AI Assistants' },
   { id: 'web-access', label: 'Web Access' },
   { id: 'security', label: 'Security' },
 ] as const;

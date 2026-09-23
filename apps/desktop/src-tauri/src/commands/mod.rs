@@ -3,6 +3,7 @@
 pub mod auth;
 pub mod files;
 pub mod folders;
+pub mod mcp;
 pub mod search;
 pub mod settings;
 pub mod templates;

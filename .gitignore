@@ -55,3 +55,6 @@ playwright-report
 
 # Claude Code local harness/tooling config (not part of the project)
 .claude/
+
+# mneme-mcp sidecar staged for the installer by scripts/prepare-sidecar.sh
+apps/desktop/src-tauri/binaries/

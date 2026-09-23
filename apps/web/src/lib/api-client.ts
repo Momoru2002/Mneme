@@ -207,6 +207,11 @@ export const api = {
       call<void>('auth_change_password', { currentPassword, newPassword }),
   },
 
+  /** Tauri-only — locates the bundled `mneme-mcp` sidecar for the Settings "AI Assistants" tab. */
+  mcp: {
+    binaryInfo: (): Promise<McpBinaryInfo> => call<McpBinaryInfo>('mcp_binary_info'),
+  },
+
   /** Tauri-only commands — only invoke these from desktop context (isTauri()). */
   webMode: {
     status: (): Promise<WebModeInfo> => call<WebModeInfo>('web_mode_status'),
@@ -221,6 +226,13 @@ export interface AuthStatus {
   /** Whether a password has ever been set. `false` → show a "create a password" screen. */
   isSetUp: boolean;
   unlocked: boolean;
+}
+
+export interface McpBinaryInfo {
+  /** Absolute path to the bundled `mneme-mcp`, or null when it isn't installed beside the app. */
+  path: string | null;
+  /** True for a Linux AppImage: the path changes every launch, so don't save it in a client config. */
+  ephemeral: boolean;
 }
 
 export interface WebModeInfo {

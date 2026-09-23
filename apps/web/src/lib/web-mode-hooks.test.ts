@@ -56,7 +56,7 @@ describe('Settings category list — Web Access visibility', () => {
     // on desktop, ABSENT from the browser list (so a browser user can't reach
     // either: web-access controls the server itself, and security has no
     // unlock path over that transport anyway).
-    for (const id of ['web-access', 'security']) {
+    for (const id of ['mcp', 'web-access', 'security']) {
       expect(desktopIds).toContain(id);
       expect(baseIds).not.toContain(id);
     }

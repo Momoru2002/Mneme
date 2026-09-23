@@ -84,6 +84,12 @@ jobs:
         with:
           workspaces: './apps/desktop/src-tauri -> target'
 
+      # tauri-build verifies every `externalBin` file exists at compile time;
+      # tests/clippy never bundle it, so an empty placeholder is enough.
+      - name: Stage mneme-mcp placeholder
+        shell: bash
+        run: bash scripts/prepare-sidecar.sh --placeholder
+
       - name: Test
         run: cargo test
         working-directory: apps/desktop/src-tauri
