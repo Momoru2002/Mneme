@@ -1,0 +1,28 @@
+version: 2
+updates:
+  # JS/TS packages across the pnpm workspace (root manifest covers all
+  # apps/* and packages/* via the workspace protocol)
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+
+  # Rust crate (Tauri core + mneme-mcp bin target live in the same package)
+  - package-ecosystem: "cargo"
+    directory: "/apps/desktop/src-tauri"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+
+  # Keep the CI/release workflow actions themselves current
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
