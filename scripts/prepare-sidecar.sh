@@ -52,4 +52,13 @@ else
   cp "target/release/mneme-mcp$ext" "binaries/mneme-mcp-$host$ext"
 fi
 
+# macOS: give the staged binaries an ad-hoc signature (lipo output in particular
+# carries none). This is NOT a Developer ID signature — Gatekeeper still treats the
+# app as unsigned — but it keeps the Mach-O binaries structurally valid.
+if [ "$(uname -s)" = "Darwin" ]; then
+  for t in "${triples[@]}"; do
+    codesign --force --sign - "binaries/mneme-mcp-$t"
+  done
+fi
+
 ls -l binaries/
