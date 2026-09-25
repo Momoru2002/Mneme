@@ -28,9 +28,15 @@ jobs:
             python -c "
           import re
           t=open('sidecar.log',errors='replace').read()
-          t=re.sub(r'\x1b\[[0-9;]*m','',t).replace('\r','')[-6000:]
-          t=t.replace('%','%25').replace('\n','%0A')
-          print('::error::'+t)
+          t=re.sub(r'\x1b\[[0-9;]*m','',t).replace('\r','')
+          lines=t.split('\n')
+          idxs=[i for i,l in enumerate(lines) if l.strip().startswith('error')]
+          if idxs:
+              i=idxs[0]
+              out='\n'.join(lines[max(0,i-3):]).strip()[:6000]
+          else:
+              out=t[-6000:]
+          print('::error::'+out.replace('%','%25').replace('\n','%0A'))
           "
           fi
           exit $code
