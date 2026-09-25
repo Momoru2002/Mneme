@@ -2,11 +2,11 @@
 //!
 //! Everything else in `core/` takes an already-open `&Connection` — this is
 //! the one exception, because it's the thing an out-of-process caller (the
-//! `mneme-mcp` binary, a separate `[[bin]]` in this same package — see
-//! `src/bin/mneme-mcp.rs`) cannot do for itself: `db` and `perms` are private
-//! modules (deliberately — they're the on-disk security boundary, see
-//! `perms.rs`'s doc comment), so a bin target linking `mneme_lib` as an
-//! external crate has no way to reach `perms::mneme_home()` or
+//! `mneme-mcp` crate, a sibling workspace member — see
+//! `apps/desktop/mcp-server`) cannot do for itself: `db` and `perms` are
+//! private modules (deliberately — they're the on-disk security boundary,
+//! see `perms.rs`'s doc comment), so a crate linking `mneme_lib` as a path
+//! dependency has no way to reach `perms::mneme_home()` or
 //! `db::open_app_db()` directly. This function is the sanctioned, minimal
 //! crack in that wall: it does exactly what the desktop app itself does to
 //! open its own database, and nothing else.

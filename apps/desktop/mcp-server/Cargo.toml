@@ -1,0 +1,26 @@
+[package]
+name = "mneme-mcp"
+version = "0.2.2"
+description = "Model Context Protocol server exposing a Mneme Well over stdio"
+authors = ["Mneme contributors"]
+license = ""
+repository = ""
+edition = "2021"
+rust-version = "1.83"
+
+[[bin]]
+name = "mneme-mcp"
+path = "src/main.rs"
+
+# Path dependency on the desktop app's crate — resolved within the same
+# Cargo workspace (see the `[workspace]` table in ../src-tauri/Cargo.toml),
+# so this always links against the exact same mneme_lib version/build as
+# the app it talks to over the shared ~/.mneme/mneme.db.
+[dependencies]
+mneme_lib = { path = "../src-tauri" }
+rmcp = { version = "3", features = ["server", "transport-io"] }
+tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
+schemars = "1"
+anyhow = "1"
+serde = { version = "1.0", features = ["derive"] }
+rusqlite = { version = "0.31", features = ["bundled"] }

@@ -1,3 +1,18 @@
+[workspace]
+# `mcp-server` used to be a `[[bin]]` inside this very package (see git
+# history). Windows' WiX bundler doesn't like more than one `[[bin]]` in the
+# package it's bundling from — it double-embeds the extra binary, which
+# `light.exe` then rejects (ICE30: same target file installed by two
+# components). Splitting it into its own workspace member fixes that: this
+# package goes back to having exactly one bin (`mneme`), and mcp-server is
+# built separately by scripts/prepare-sidecar.sh and staged as a sidecar.
+members = [".", "../mcp-server"]
+# `cargo build`/`test`/`clippy` run from this directory (as CI and the
+# README's dev commands do) build ONLY this package by default, exactly as
+# before the split. Pass `--workspace` to also cover mcp-server.
+default-members = ["."]
+resolver = "2"
+
 [package]
 name = "mneme"
 version = "0.2.2"
@@ -54,13 +69,9 @@ tempfile = "3"
 tiny_http = "0.12"
 rust-embed = "8"
 getrandom = "0.2"
-# MCP server binary (src/bin/mneme-mcp.rs) — lets AI assistants (Claude
-# Desktop, Claude Code, and anything else that speaks MCP) read and write
-# notes in a Well over stdio. `rmcp` is the official Rust MCP SDK.
-rmcp = { version = "3", features = ["server", "transport-io"] }
-tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
-schemars = "1"
-anyhow = "1"
+# mneme-mcp (the MCP server) is its own workspace member — see
+# apps/desktop/mcp-server/Cargo.toml — so rmcp/tokio/schemars/anyhow, which
+# it alone needs, live there instead of here.
 
 # libc's Unix-specific bits (getuid, ENOTEMPTY, utimes) are only used on Unix —
 # see perms.rs, logging.rs, snapshots.rs. Scoping it here keeps a Windows build
