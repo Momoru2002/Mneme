@@ -32,7 +32,9 @@ jobs:
             python -c "
           import re
           t=open('build.log',errors='replace').read()
-          t=re.sub(r'\x1b\[[0-9;]*m','',t).replace('\r','')[-6000:]
+          t=re.sub(r'\x1b\[[0-9;]*m','',t).replace('\r','')
+          i=t.rfind('light to produce')
+          t=(t[i-40:] if i!=-1 else t[-6000:])[:6000]
           t=t.replace('%','%25').replace('\n','%0A')
           print('::error::'+t)
           "
