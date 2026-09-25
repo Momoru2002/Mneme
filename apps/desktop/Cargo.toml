@@ -1,0 +1,20 @@
+# Virtual workspace root. `src-tauri` (the desktop app) and `mcp-server` (the
+# MCP server) are siblings, and Cargo requires every workspace member to sit
+# hierarchically below the workspace root — so the root has to live here,
+# one level up, rather than inside `src-tauri` itself.
+#
+# Why they're split at all: `mcp-server` used to be a `[[bin]]` inside the
+# `src-tauri` package. Windows' WiX bundler doesn't like more than one
+# `[[bin]]` in the package it's bundling from — it double-embeds the extra
+# binary, which `light.exe` then rejects (ICE30: same target file installed
+# by two components). As separate packages, `src-tauri` goes back to having
+# exactly one bin (`mneme`), and mcp-server is built separately by
+# scripts/prepare-sidecar.sh and staged as a sidecar.
+[workspace]
+members = ["src-tauri", "mcp-server"]
+# `cargo build`/`test`/`clippy` run from src-tauri/ (as CI and the README's
+# dev commands do) operate on just that package by default, since it's a
+# member directory rather than this virtual root — this list only matters
+# for a command run from this directory. Pass `--workspace` to cover both.
+default-members = ["src-tauri"]
+resolver = "2"
