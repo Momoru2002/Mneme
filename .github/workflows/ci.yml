@@ -91,9 +91,9 @@ jobs:
         run: bash scripts/prepare-sidecar.sh --placeholder
 
       - name: Test
-        run: cargo test
+        run: cargo test --workspace
         working-directory: apps/desktop/src-tauri
 
       - name: Clippy
-        run: cargo clippy --all-targets --all-features -- -D warnings
+        run: cargo clippy --workspace --all-targets --all-features -- -D warnings
         working-directory: apps/desktop/src-tauri

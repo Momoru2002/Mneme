@@ -1,0 +1,61 @@
+name: Debug Windows bundle
+on:
+  push:
+    branches: [debug-win]
+jobs:
+  win:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - uses: dtolnay/rust-toolchain@1.92.0
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: './apps/desktop/src-tauri -> target'
+      - run: pnpm install
+      - run: pnpm --filter @mneme/web build
+      - name: Stage sidecar
+        shell: bash
+        run: |
+          set +e
+          bash scripts/prepare-sidecar.sh --host > sidecar.log 2>&1
+          code=$?
+          if [ $code -ne 0 ]; then
+            python -c "
+          import re
+          t=open('sidecar.log',errors='replace').read()
+          t=re.sub(r'\x1b\[[0-9;]*m','',t).replace('\r','')
+          lines=t.split('\n')
+          idxs=[i for i,l in enumerate(lines) if l.strip().startswith('error')]
+          if idxs:
+              i=idxs[0]
+              out='\n'.join(lines[max(0,i-3):]).strip()[:6000]
+          else:
+              out=t[-6000:]
+          print('::error::'+out.replace('%','%25').replace('\n','%0A'))
+          "
+          fi
+          exit $code
+      - name: Tauri build (instrumented)
+        shell: bash
+        working-directory: apps/desktop
+        run: |
+          set +e
+          npm run tauri build -- --verbose > build.log 2>&1
+          code=$?
+          if [ $code -ne 0 ]; then
+            python -c "
+          import re
+          t=open('build.log',errors='replace').read()
+          t=re.sub(r'\x1b\[[0-9;]*m','',t).replace('\r','')
+          i=t.rfind('light to produce')
+          t=(t[i-40:] if i!=-1 else t[-6000:])[:6000]
+          t=t.replace('%','%25').replace('\n','%0A')
+          print('::error::'+t)
+          "
+          fi
+          exit $code

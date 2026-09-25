@@ -1,0 +1,29 @@
+[package]
+name = "mneme-mcp"
+version = "0.2.2"
+description = "Model Context Protocol server exposing a Mneme Well over stdio"
+authors = ["Mneme contributors"]
+license = ""
+repository = ""
+edition = "2021"
+rust-version = "1.83"
+
+[[bin]]
+name = "mneme-mcp"
+path = "src/main.rs"
+
+# Path dependency on the desktop app's crate — resolved within the same
+# Cargo workspace (see ../Cargo.toml), so this always links against the exact
+# same mneme_lib version/build as the app it talks to over the shared
+# ~/.mneme/mneme.db. The package there is named "mneme" ([package].name);
+# `package = "mneme"` fetches it while keeping the `mneme_lib` alias below
+# (matching its own `[lib].name`) as the extern crate name in code.
+[dependencies]
+mneme_lib = { path = "../src-tauri", package = "mneme" }
+rmcp = { version = "3", features = ["server", "transport-io"] }
+tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
+schemars = "1"
+anyhow = "1"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+rusqlite = { version = "0.31", features = ["bundled"] }

@@ -279,7 +279,7 @@ pnpm --filter @mneme/desktop build            # produces the installer(s) for yo
 
 ```sh
 # Rust core (run `bash scripts/prepare-sidecar.sh --placeholder` once first):
-cd apps/desktop/src-tauri && cargo test && cargo clippy --all-targets --all-features
+cd apps/desktop/src-tauri && cargo test --workspace && cargo clippy --workspace --all-targets --all-features
 
 # Web UI:
 pnpm --filter @mneme/web test

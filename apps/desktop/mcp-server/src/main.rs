@@ -2,12 +2,15 @@
 //! install's Wells to any MCP-capable AI assistant (Claude Desktop, Claude
 //! Code, and anything else that speaks the protocol), over stdio.
 //!
-//! This is a separate `[[bin]]` in the same package as the desktop app (see
-//! Cargo.toml), not a second copy of the app: every tool below is a thin
-//! wrapper over `mneme_lib::core::*`, the SAME transport-agnostic functions
-//! the desktop app's Tauri commands and its Web Mode HTTP handlers call —
-//! same path-confinement, same well-existence guards, same error mapping.
-//! This is the third transport, not a parallel implementation.
+//! This is its own crate (a Cargo workspace member alongside the desktop
+//! app's `src-tauri` crate), not a second copy of the app: every tool below
+//! is a thin wrapper over `mneme_lib::core::*`, the SAME transport-agnostic
+//! functions the desktop app's Tauri commands and its Web Mode HTTP handlers
+//! call — same path-confinement, same well-existence guards, same error
+//! mapping. This is the third transport, not a parallel implementation.
+//! (It started as a `[[bin]]` inside the `src-tauri` package itself; that
+//! made Windows' WiX bundler embed it twice — see the workspace split in
+//! `apps/desktop/mcp-server/Cargo.toml`.)
 //!
 //! Run manually with `mneme-mcp` (built alongside the desktop app), or point
 //! an MCP client's config at the built binary's path so it gets launched

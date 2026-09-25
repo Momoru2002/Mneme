@@ -42,13 +42,13 @@ fi
 
 if [ "$mode" = "--universal" ]; then
   for t in aarch64-apple-darwin x86_64-apple-darwin; do
-    cargo build --release --bin mneme-mcp --target "$t"
+    cargo build --release -p mneme-mcp --target "$t"
     cp "target/$t/release/mneme-mcp" "binaries/mneme-mcp-$t"
   done
   lipo -create -output binaries/mneme-mcp-universal-apple-darwin \
     binaries/mneme-mcp-aarch64-apple-darwin binaries/mneme-mcp-x86_64-apple-darwin
 else
-  cargo build --release --bin mneme-mcp
+  cargo build --release -p mneme-mcp
   cp "target/release/mneme-mcp$ext" "binaries/mneme-mcp-$host$ext"
 fi
 

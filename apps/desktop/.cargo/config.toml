@@ -1,0 +1,8 @@
+# Pin the workspace's shared target directory back to where it was before
+# mcp-server became a sibling workspace member (src-tauri/target), so every
+# existing relative `target/release/...` reference — scripts/prepare-sidecar.sh,
+# CI's rust-cache path, Tauri's own build output — keeps working unchanged.
+# Relative paths here resolve relative to this file's parent directory
+# (apps/desktop), per Cargo's config path resolution.
+[build]
+target-dir = "src-tauri/target"
