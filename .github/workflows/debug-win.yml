@@ -20,7 +20,20 @@ jobs:
       - run: pnpm --filter @mneme/web build
       - name: Stage sidecar
         shell: bash
-        run: bash scripts/prepare-sidecar.sh --host
+        run: |
+          set +e
+          bash scripts/prepare-sidecar.sh --host > sidecar.log 2>&1
+          code=$?
+          if [ $code -ne 0 ]; then
+            python -c "
+          import re
+          t=open('sidecar.log',errors='replace').read()
+          t=re.sub(r'\x1b\[[0-9;]*m','',t).replace('\r','')[-6000:]
+          t=t.replace('%','%25').replace('\n','%0A')
+          print('::error::'+t)
+          "
+          fi
+          exit $code
       - name: Tauri build (instrumented)
         shell: bash
         working-directory: apps/desktop
