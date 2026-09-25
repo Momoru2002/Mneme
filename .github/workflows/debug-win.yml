@@ -26,13 +26,13 @@ jobs:
         working-directory: apps/desktop
         run: |
           set +e
-          npm run tauri build > build.log 2>&1
+          npm run tauri build -- --verbose > build.log 2>&1
           code=$?
           if [ $code -ne 0 ]; then
             python -c "
           import re
           t=open('build.log',errors='replace').read()
-          t=re.sub(r'\x1b\[[0-9;]*m','',t).replace('\r','')[-3200:]
+          t=re.sub(r'\x1b\[[0-9;]*m','',t).replace('\r','')[-6000:]
           t=t.replace('%','%25').replace('\n','%0A')
           print('::error::'+t)
           "
