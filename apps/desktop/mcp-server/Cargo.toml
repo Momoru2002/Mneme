@@ -1,6 +1,6 @@
 [package]
 name = "mneme-mcp"
-version = "0.2.3"
+version = "0.2.4"
 description = "Model Context Protocol server exposing a Mneme Well over stdio"
 authors = ["Mneme contributors"]
 license = ""

@@ -1,6 +1,6 @@
 [package]
 name = "mneme"
-version = "0.2.3"
+version = "0.2.4"
 description = "Mneme — local-first knowledge vault desktop app"
 authors = ["Mneme contributors"]
 license = ""
