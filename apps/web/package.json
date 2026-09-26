@@ -55,7 +55,7 @@
     "zustand": "^5.0.2"
   },
   "devDependencies": {
-    "@tailwindcss/vite": "^4.3.0",
+    "@tailwindcss/vite": "^4.3.3",
     "@tanstack/router-plugin": "^1.94.1",
     "@types/node": "^22.10.5",
     "@types/path-browserify": "^1.0.3",
