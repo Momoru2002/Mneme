@@ -52,6 +52,15 @@ else
   cp "target/release/mneme-mcp$ext" "binaries/mneme-mcp-$host$ext"
 fi
 
+# `cp`/`lipo -create -output` write into the placeholder file staged above
+# rather than replacing it outright, so the destination's permission bits
+# (644, from the empty placeholder) are left as-is — the compiled binary's own
+# executable bit is NOT carried over. Set it explicitly on every real binary
+# just staged (a no-op on the Windows .exe, which doesn't use a POSIX exec bit).
+for t in "${triples[@]}"; do
+  chmod +x "binaries/mneme-mcp-$t$ext"
+done
+
 # macOS: give the staged binaries an ad-hoc signature (lipo output in particular
 # carries none). This is NOT a Developer ID signature — Gatekeeper still treats the
 # app as unsigned — but it keeps the Mach-O binaries structurally valid.
