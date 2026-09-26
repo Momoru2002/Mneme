@@ -42,7 +42,7 @@ filetime = "0.2"
 # two tree entries whose names collide once NFC-folded would silently overwrite
 # each other on a normalizing/ case-insensitive filesystem at checkout.
 unicode-normalization = "0.1"
-argon2 = "0.5"
+argon2 = "0.6"
 # Enables `OsRng` for SaltString::generate (argon2's defaults don't pull the
 # getrandom feature); feature-unification turns it on for argon2's re-export.
 password-hash = { version = "0.5", features = ["getrandom"] }
