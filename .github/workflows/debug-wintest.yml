@@ -23,40 +23,39 @@ jobs:
       - name: Stage placeholder
         shell: bash
         run: bash scripts/prepare-sidecar.sh --placeholder
-      - name: Test and post result as a commit comment
+      - name: Run tests (repeat until a failure or 5 attempts)
+        shell: bash
+        working-directory: apps/desktop/src-tauri
+        run: |
+          for i in 1 2 3 4 5; do
+            echo "=== attempt $i ==="
+            cargo test --workspace -- --test-threads=1 > "test-$i.log" 2>&1
+            code=$?
+            echo "attempt $i exit=$code" | tee -a summary.txt
+            if [ $code -ne 0 ]; then
+              cp "test-$i.log" test.log
+              echo "$i" > failed_attempt.txt
+              break
+            fi
+          done
+        continue-on-error: true
+      - name: Post result as a commit comment
+        if: always()
         shell: bash
         working-directory: apps/desktop/src-tauri
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          cargo test --workspace -- --test-threads=1 > test.log 2>&1
-          code=$?
-          echo "exit=$code" >> test.log
-          python -c "
-          import json, re
-          t = open('test.log', errors='replace').read()
-          t = re.sub(r'\x1b\[[0-9;]*m', '', t).replace('\r', '')
-          body = '\`\`\`\n' + t[-60000:] + '\n\`\`\`'
-          json.dump({'body': body}, open('comment.json', 'w'))
-          "
+          if [ -f test.log ]; then
+            src=test.log
+          else
+            src=summary.txt
+          fi
+          python ../../../scripts/debug_post_log.py "$src"
           http_code=$(curl -s -o response.json -w "%{http_code}" -X POST \
             -H "Authorization: token $GH_TOKEN" \
             -H "Content-Type: application/json" \
-            -d @comment.json \
+            -d @comment_body.json \
             "https://api.github.com/repos/${{ github.repository }}/commits/${{ github.sha }}/comments")
-          echo "curl http_code: $http_code"
+          echo "post http_code: $http_code"
           cat response.json
-          exit $code
-        continue-on-error: true
-      - name: Verify token can post comments at all
-        shell: bash
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          http_code=$(curl -s -o /tmp/ping_response.json -w "%{http_code}" -X POST \
-            -H "Authorization: token $GH_TOKEN" \
-            -H "Content-Type: application/json" \
-            -d '{"body":"ping from debug-wintest"}' \
-            "https://api.github.com/repos/${{ github.repository }}/commits/${{ github.sha }}/comments")
-          echo "ping http_code: $http_code"
-          cat /tmp/ping_response.json
