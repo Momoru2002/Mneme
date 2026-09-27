@@ -28,18 +28,14 @@ jobs:
           set +e
           cargo test --workspace -- --test-threads=1 > test.log 2>&1
           code=$?
+          echo "exit code: $code"
+          wc -l test.log
           if [ $code -ne 0 ]; then
             python -c "
           import re
           t=open('test.log',errors='replace').read()
           t=re.sub(r'\x1b\[[0-9;]*m','',t).replace('\r','')
-          lines=t.split('\n')
-          idxs=[i for i,l in enumerate(lines) if 'FAILED' in l or l.strip().startswith('---- ') or 'panicked' in l]
-          if idxs:
-              i=idxs[0]
-              out='\n'.join(lines[max(0,i-2):]).strip()[:6000]
-          else:
-              out=t[-6000:]
+          out=t[-6500:]
           print('::error::'+out.replace('%','%25').replace('\n','%0A'))
           "
           fi
