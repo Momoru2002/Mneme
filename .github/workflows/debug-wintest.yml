@@ -1,0 +1,46 @@
+name: Debug Windows test failure
+on:
+  push:
+    branches: [debug-wintest]
+jobs:
+  win:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - uses: dtolnay/rust-toolchain@1.92.0
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: './apps/desktop/src-tauri -> target'
+      - run: pnpm install
+      - run: pnpm --filter @mneme/web build
+      - name: Stage placeholder
+        shell: bash
+        run: bash scripts/prepare-sidecar.sh --placeholder
+      - name: Test (instrumented)
+        shell: bash
+        working-directory: apps/desktop/src-tauri
+        run: |
+          set +e
+          cargo test --workspace -- --test-threads=1 > test.log 2>&1
+          code=$?
+          if [ $code -ne 0 ]; then
+            python -c "
+          import re
+          t=open('test.log',errors='replace').read()
+          t=re.sub(r'\x1b\[[0-9;]*m','',t).replace('\r','')
+          lines=t.split('\n')
+          idxs=[i for i,l in enumerate(lines) if 'FAILED' in l or l.strip().startswith('---- ') or 'panicked' in l]
+          if idxs:
+              i=idxs[0]
+              out='\n'.join(lines[max(0,i-2):]).strip()[:6000]
+          else:
+              out=t[-6000:]
+          print('::error::'+out.replace('%','%25').replace('\n','%0A'))
+          "
+          fi
+          exit $code
