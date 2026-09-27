@@ -25,18 +25,10 @@ jobs:
         shell: bash
         working-directory: apps/desktop/src-tauri
         run: |
-          set +e
           cargo test --workspace -- --test-threads=1 > test.log 2>&1
-          code=$?
-          echo "exit code: $code"
-          wc -l test.log
-          if [ $code -ne 0 ]; then
-            python -c "
-          import re
-          t=open('test.log',errors='replace').read()
-          t=re.sub(r'\x1b\[[0-9;]*m','',t).replace('\r','')
-          out=t[-6500:]
-          print('::error::'+out.replace('%','%25').replace('\n','%0A'))
-          "
-          fi
-          exit $code
+          echo "exit=$?" >> test.log
+        continue-on-error: true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: test-log
+          path: apps/desktop/src-tauri/test.log
