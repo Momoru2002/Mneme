@@ -46,7 +46,7 @@ const PURIFY_CONFIG = {
   ADD_ATTR: ['target'],
   ADD_TAGS: [] as string[],
   ALLOWED_URI_REGEXP:
-    /^(?:(?:https?|mailto|tel|callto|sms|cid|xmpp|ftp|file|data|blob):|[^a-z]|[a-z+.-]+(?:[^a-z+.-:]|$)|#)/i,
+    /^(?:(?:https?|mailto|tel|callto|sms|cid|xmpp|ftp|file|data|blob):|[^a-z]|[a-z+.-]+(?:[^a-z+.\-:]|$)|#)/i,
 };
 
 export function renderMarkdown(src: string): string {

@@ -5,6 +5,12 @@ on:
   push:
     branches: [main]
 
+# Least-privilege default: this workflow only checks out code, builds, lints
+# and tests — it never pushes commits, comments, or releases. Individual jobs
+# can widen this if a future step genuinely needs more (e.g. PR comments).
+permissions:
+  contents: read
+
 jobs:
   web:
     runs-on: ubuntu-22.04
