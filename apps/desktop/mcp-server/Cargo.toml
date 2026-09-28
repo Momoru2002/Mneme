@@ -11,6 +11,11 @@ rust-version = "1.83"
 [[bin]]
 name = "mneme-mcp"
 path = "src/main.rs"
+# This crate has no unit tests. `cargo test --workspace` would still link an
+# empty test harness for it, and on Windows that link step intermittently fails
+# with hundreds of unresolved CRT symbols (memset, strlen, fmod, _tls_used ...).
+# Nothing to test here, so don't build the harness at all.
+test = false
 
 # Path dependency on the desktop app's crate — resolved within the same
 # Cargo workspace (see ../Cargo.toml), so this always links against the exact
