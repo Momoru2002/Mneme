@@ -39,7 +39,7 @@
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
     "isomorphic-dompurify": "^2.20.0",
-    "lucide-react": "^0.469.0",
+    "lucide-react": "^1.48.0",
     "marked": "^15.0.6",
     "mermaid": "^11.16.1",
     "path-browserify": "^1.0.1",
