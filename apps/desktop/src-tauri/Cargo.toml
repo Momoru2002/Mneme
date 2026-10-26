@@ -26,7 +26,7 @@ tauri = { version = "2.9.5", features = [] }
 tauri-plugin-log = "2"
 tauri-plugin-window-state = "2"
 rusqlite = { version = "0.31", features = ["bundled"] }
-refinery = { version = "0.8", features = ["rusqlite"] }
+refinery = { version = "0.9", features = ["rusqlite"] }
 sha2 = "0.11"
 hex = "0.4"
 thiserror = "2"
